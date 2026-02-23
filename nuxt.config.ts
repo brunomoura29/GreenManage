@@ -1,0 +1,25 @@
+// https://nuxt.com/docs/api/configuration/nuxt-config
+export default defineNuxtConfig({
+  compatibilityDate: '2025-07-15',
+  devtools: { enabled: false },
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase'],
+
+  supabase: {
+    useSsrCookies: true,
+    redirect: false, // Controle manual via middleware
+
+    redirectOptions: {
+      login: '/login',
+      callback: '/confirm',
+      include: undefined,
+      exclude: ['/login', '/confirm', '/registro', '/esqueci-senha'],
+      saveRedirectToCookie: false,
+    },
+
+    cookieOptions: {
+      maxAge: 60 * 60 * 8,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    },
+  },
+})
