@@ -1,73 +1,86 @@
 <template>
-  <!-- ── Lista ──────────────────────── -->
-  <div v-if="view === 'lista'" class="min-h-full">
+  <div class="min-h-full">
+    <Transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="transform translate-x-4 opacity-0"
+      enter-to-class="transform translate-x-0 opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="transform translate-x-0 opacity-100"
+      leave-to-class="transform translate-x-4 opacity-0"
+      mode="out-in"
+    >
+      <!-- ── Lista ──────────────────────── -->
+      <div v-if="view === 'lista'" key="lista">
 
-    <!-- Header -->
-    <div class="px-6 md:px-8 pt-8 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
-          Cadastros / Clientes
-        </h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Gerencie os clientes e suas informações aqui.
-        </p>
+        <!-- Header -->
+        <div class="px-6 md:px-8 pt-8 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+              Cadastros / Clientes
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Gerencie os clientes e suas informações aqui.
+            </p>
+          </div>
+
+          <!-- Botão novo cliente -->
+          <button
+            @click="view = 'cadastrar'"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-600 active:scale-95 transition-all shadow-soft shrink-0"
+          >
+            <UserPlus class="w-4 h-4" />
+            Novo Cliente
+          </button>
+        </div>
+
+        <!-- Barra de pesquisa -->
+        <div class="px-6 md:px-8 pb-4">
+          <div class="relative max-w-sm">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              v-model="search"
+              type="text"
+              placeholder="Buscar cliente..."
+              class="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+            />
+          </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="px-6 md:px-8 pb-8">
+          <!-- Spinner de carregamento ao abrir edição -->
+          <div v-if="carregandoEdicao" class="flex items-center justify-center py-16 text-slate-400 gap-3">
+            <svg class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+            </svg>
+            <span class="text-sm">Carregando dados do cliente...</span>
+          </div>
+          <ListaClientes
+            v-else
+            :clientes="clientesFiltrados"
+            :loading="loading"
+            v-model:current-page="paginaAtual"
+            :items-per-page="itensPorPagina"
+            @edit="handleEdit"
+            @delete="handleDelete"
+          />
+        </div>
+
       </div>
 
-      <!-- Botão novo cliente -->
-      <button
-        @click="view = 'cadastrar'"
-        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-600 active:scale-95 transition-all shadow-soft shrink-0"
-      >
-        <UserPlus class="w-4 h-4" />
-        Novo Cliente
-      </button>
-    </div>
-
-    <!-- Barra de pesquisa -->
-    <div class="px-6 md:px-8 pb-4">
-      <div class="relative max-w-sm">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Buscar cliente..."
-          class="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+      <!-- ── Cadastrar / Editar ──────────── -->
+      <div v-else key="cadastrar">
+        <CadastrarCliente
+          :isNovo="clienteEditando === null"
+          :cliente="clienteEditando"
+          :enderecoInicial="enderecoEditando"
+          :enderecoIdInicial="enderecoIdEditando"
+          @voltar="voltarParaLista"
         />
       </div>
-    </div>
-
-    <!-- Tabela -->
-    <div class="px-6 md:px-8 pb-8">
-      <!-- Spinner de carregamento ao abrir edição -->
-      <div v-if="carregandoEdicao" class="flex items-center justify-center py-16 text-slate-400 gap-3">
-        <svg class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-        </svg>
-        <span class="text-sm">Carregando dados do cliente...</span>
-      </div>
-      <ListaClientes
-        v-else
-        :clientes="clientesFiltrados"
-        :loading="loading"
-        v-model:current-page="paginaAtual"
-        :items-per-page="itensPorPagina"
-        @edit="handleEdit"
-        @delete="handleDelete"
-      />
-    </div>
-
+    </Transition>
   </div>
-
-  <!-- ── Cadastrar / Editar ──────────── -->
-  <CadastrarCliente
-    v-else
-    :isNovo="clienteEditando === null"
-    :cliente="clienteEditando"
-    :enderecoInicial="enderecoEditando"
-    :enderecoIdInicial="enderecoIdEditando"
-    @voltar="voltarParaLista"
-  />
 
   <!-- Modal de Confirmação de Exclusão -->
   <BaseModalConfirm

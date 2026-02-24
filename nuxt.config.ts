@@ -6,14 +6,14 @@ export default defineNuxtConfig({
 
   supabase: {
     useSsrCookies: true,
-    redirect: false, // Controle manual via middleware
+    redirect: true, // Redirecionamento automático ativado
 
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
       include: undefined,
       exclude: ['/login', '/confirm', '/registro', '/esqueci-senha'],
-      saveRedirectToCookie: false,
+      saveRedirectToCookie: true, // Recomendado para redirecionar de volta à página original
     },
 
     cookieOptions: {

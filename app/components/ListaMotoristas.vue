@@ -7,19 +7,16 @@
         <!-- Cabeçalho -->
         <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
           <tr>
-            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
-              Motorista
+            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">
+              Nome motorista
             </th>
-            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
-              CPF
+            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">
+              Cpf
             </th>
-            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
-              CNH
+            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">
+              Nome da transportadora
             </th>
-            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
-              Telefone
-            </th>
-            <th class="px-4 py-3 w-20 text-center font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+            <th class="px-4 py-3 w-20 text-center font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">
               Ações
             </th>
           </tr>
@@ -56,15 +53,12 @@
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
                   <span class="text-xs font-semibold text-primary-700 dark:text-primary-400">
-                    {{ initials(motorista.nome) }}
+                    {{ initials(motorista.name) }}
                   </span>
                 </div>
                 <div class="min-w-0">
                   <p class="font-medium text-slate-900 dark:text-white truncate">
-                    {{ motorista.nome || '—' }}
-                  </p>
-                  <p class="text-xs text-slate-400 dark:text-slate-500 truncate">
-                    {{ motorista.email || 'Sem email' }}
+                    {{ motorista.name || '—' }}
                   </p>
                 </div>
               </div>
@@ -75,14 +69,9 @@
               {{ motorista.cpf || '—' }}
             </td>
 
-            <!-- CNH -->
+            <!-- Transportadora -->
             <td class="px-4 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-              {{ motorista.cnh || '—' }}
-            </td>
-
-            <!-- Telefone -->
-            <td class="px-4 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-              {{ motorista.telefone || '—' }}
+              {{ motorista.transportadora || '—' }}
             </td>
 
             <!-- Ações -->
@@ -142,18 +131,15 @@
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
               <span class="text-sm font-semibold text-primary-700 dark:text-primary-400">
-                {{ initials(motorista.nome) }}
+                {{ initials(motorista.name) }}
               </span>
             </div>
             <div class="min-w-0">
               <p class="font-semibold text-slate-900 dark:text-white truncate">
-                {{ motorista.nome || '—' }}
+                {{ motorista.name || '—' }}
               </p>
               <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
                 {{ motorista.cpf || '—' }}
-              </p>
-              <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                {{ motorista.telefone || '—' }}
               </p>
             </div>
           </div>
@@ -195,15 +181,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Pencil, Trash2, Briefcase } from 'lucide-vue-next'
-
-interface Motorista {
-  id: string
-  nome: string | null
-  cpf: string | null
-  cnh: string | null
-  telefone: string | null
-  email?: string | null
-}
+import type { Motorista } from '~/types/motorista'
 
 const props = defineProps<{
   motoristas: Motorista[]
