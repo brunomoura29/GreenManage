@@ -48,7 +48,7 @@
             <!-- Imagem -->
             <td class="px-4 py-3">
               <div class="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700">
-                <img v-if="local.imagem" :src="local.imagem ?? undefined" :alt="local.nome ?? undefined" class="w-full h-full object-cover" />
+                <img v-if="local.photos" :src="local.photos ?? undefined" :alt="local.name ?? undefined" class="w-full h-full object-cover" />
                 <MapPin v-else class="w-6 h-6 text-slate-400" />
               </div>
             </td>
@@ -56,7 +56,7 @@
             <!-- Nome -->
             <td class="px-4 py-3">
               <p class="font-medium text-slate-900 dark:text-white">
-                {{ local.nome || '—' }}
+                {{ local.name || '—' }}
               </p>
             </td>
 
@@ -115,12 +115,12 @@
           <!-- Info -->
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700">
-              <img v-if="local.imagem" :src="local.imagem ?? undefined" :alt="local.nome ?? undefined" class="w-full h-full object-cover" />
+              <img v-if="local.photos" :src="local.photos ?? undefined" :alt="local.name ?? undefined" class="w-full h-full object-cover" />
               <MapPin v-else class="w-5 h-5 text-slate-400" />
             </div>
             <div class="min-w-0">
               <p class="font-semibold text-slate-900 dark:text-white truncate">
-                {{ local.nome || '—' }}
+                {{ local.name || '—' }}
               </p>
             </div>
           </div>
@@ -162,12 +162,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Pencil, Trash2, MapPin } from 'lucide-vue-next'
-
-interface Local {
-  id: string
-  nome: string | null
-  imagem: string | null
-}
+import type { Local } from '~/types/local'
 
 const props = defineProps<{
   locais: Local[]

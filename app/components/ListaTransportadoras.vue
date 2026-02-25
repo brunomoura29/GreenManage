@@ -7,16 +7,16 @@
         <!-- Cabeçalho -->
         <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
           <tr>
-            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
-              Transportadora
+            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">
+              Nome Fantasia
             </th>
-            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">
               CNPJ
             </th>
-            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+            <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">
               E-mail
             </th>
-            <th class="px-4 py-3 w-20 text-center font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+            <th class="px-4 py-3 w-20 text-center font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">
               Ações
             </th>
           </tr>
@@ -48,7 +48,7 @@
             :key="transportadora.id"
             class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
           >
-            <!-- Transportadora (Nome/Icon) -->
+            <!-- Nome Fantasia (Icon) -->
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
@@ -56,7 +56,7 @@
                 </div>
                 <div class="min-w-0">
                   <p class="font-medium text-slate-900 dark:text-white truncate">
-                    {{ transportadora.nome || '—' }}
+                    {{ transportadora.nome_fantasia || '—' }}
                   </p>
                 </div>
               </div>
@@ -132,7 +132,7 @@
             </div>
             <div class="min-w-0">
               <p class="font-semibold text-slate-900 dark:text-white truncate">
-                {{ transportadora.nome || '—' }}
+                {{ transportadora.nome_fantasia || '—' }}
               </p>
               <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
                 {{ transportadora.cnpj || '—' }}
@@ -180,13 +180,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Pencil, Trash2, Truck } from 'lucide-vue-next'
-
-interface Transportadora {
-  id: string
-  nome: string | null
-  cnpj: string | null
-  email: string | null
-}
+import type { Transportadora } from '~/types/transportadora'
 
 const props = defineProps<{
   transportadoras: Transportadora[]

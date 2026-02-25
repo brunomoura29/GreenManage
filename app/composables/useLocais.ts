@@ -1,9 +1,9 @@
-import type { Transportadora, TransportadoraInsert, TransportadoraUpdate } from '~/types/transportadora'
+import type { Local, LocalInsert, LocalUpdate } from '~/types/local'
 
-export const useTransportadoras = () => {
+export const useLocais = () => {
     const supabase = useSupabaseClient() as any
 
-    const transportadoras = ref<Transportadora[]>([])
+    const locais = ref<Local[]>([])
     const loading = ref(false)
     const error = ref<string | null>(null)
 
@@ -21,28 +21,28 @@ export const useTransportadoras = () => {
 
     // ── READ – listar todos ───────────────────────────────────────────────────
 
-    async function fetchTransportadoras() {
+    async function fetchLocais() {
         setLoading(true)
         const { data, error: err } = await supabase
-            .from('transportadoras')
+            .from('locais')
             .select('*')
-            .order('nome_fantasia', { ascending: true })
+            .order('name', { ascending: true })
 
         setLoading(false)
         if (err) return handleError(err)
 
-        transportadoras.value = (data as Transportadora[]) ?? []
-        return { success: true, data: transportadoras.value, error: null }
+        locais.value = (data as Local[]) ?? []
+        return { success: true, data: locais.value, error: null }
     }
 
     // ── CREATE ────────────────────────────────────────────────────────────────
 
-    async function createTransportadora(payload: TransportadoraInsert) {
+    async function createLocal(payload: LocalInsert) {
         setLoading(true)
         const now = new Date().toISOString()
 
         const { data, error: err } = await supabase
-            .from('transportadoras')
+            .from('locais')
             .insert({
                 ...payload,
                 creation_date: now,
@@ -54,18 +54,18 @@ export const useTransportadoras = () => {
         setLoading(false)
         if (err) return handleError(err)
 
-        const created = data as Transportadora
-        transportadoras.value.push(created)
+        const created = data as Local
+        locais.value.push(created)
         return { success: true, data: created, error: null }
     }
 
     // ── UPDATE ────────────────────────────────────────────────────────────────
 
-    async function updateTransportadora(id: string, payload: TransportadoraUpdate) {
+    async function updateLocal(id: string, payload: LocalUpdate) {
         setLoading(true)
 
         const { data, error: err } = await supabase
-            .from('transportadoras')
+            .from('locais')
             .update({
                 ...payload,
                 modified_date: new Date().toISOString(),
@@ -77,37 +77,37 @@ export const useTransportadoras = () => {
         setLoading(false)
         if (err) return handleError(err)
 
-        const updated = data as Transportadora
-        const index = transportadoras.value.findIndex((t) => t.id === id)
-        if (index !== -1) transportadoras.value[index] = updated
+        const updated = data as Local
+        const index = locais.value.findIndex((l) => l.id === id)
+        if (index !== -1) locais.value[index] = updated
 
         return { success: true, data: updated, error: null }
     }
 
     // ── DELETE ────────────────────────────────────────────────────────────────
 
-    async function deleteTransportadora(id: string) {
+    async function deleteLocal(id: string) {
         setLoading(true)
 
         const { error: err } = await supabase
-            .from('transportadoras')
+            .from('locais')
             .delete()
             .eq('id', id)
 
         setLoading(false)
         if (err) return handleError(err)
 
-        transportadoras.value = transportadoras.value.filter((t) => t.id !== id)
+        locais.value = locais.value.filter((l) => l.id !== id)
         return { success: true, data: null, error: null }
     }
 
     return {
-        transportadoras,
+        locais,
         loading,
         error,
-        fetchTransportadoras,
-        createTransportadora,
-        updateTransportadora,
-        deleteTransportadora
+        fetchLocais,
+        createLocal,
+        updateLocal,
+        deleteLocal
     }
 }
