@@ -13,18 +13,22 @@
       <div v-if="view === 'lista'" key="lista">
         <!-- Page Header -->
         <div class="px-6 md:px-8 pt-8 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div class="flex flex-col">
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">Cadastros / Operadores</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Gerencie os operadores e suas informações aqui.</p>
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+              Medições / Indicadores
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Gerencie os indicadores e seus valores aqui.
+            </p>
           </div>
 
-          <!-- Botão Novo Operador -->
+          <!-- Botão novo indicador -->
           <button
             @click="handleNovo"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-600 active:scale-95 transition-all shadow-soft shrink-0"
           >
             <Plus class="w-4 h-4" />
-            Novo Operador
+            Novo Indicador
           </button>
         </div>
 
@@ -35,7 +39,7 @@
             <input
               v-model="search"
               type="text"
-              placeholder="Buscar por nome ou CPF..."
+              placeholder="Buscar pelo nome do indicador..."
               class="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
             />
           </div>
@@ -43,11 +47,12 @@
 
         <!-- Page Content -->
         <div class="px-6 md:px-8 pb-8">
-          <ListaOperadores
-            :operadores="operadoresFiltrados"
+          <ListaIndicadores
+            :indicadores="indicadoresFiltrados"
             :loading="loading"
             v-model:current-page="currentPage"
             :items-per-page="itemsPerPage"
+            :search="search"
             @edit="handleEdit"
             @delete="handleDelete"
           />
@@ -56,11 +61,11 @@
 
       <!-- View: Cadastro/Edição -->
       <div v-else key="cadastro">
-        <CadastroOperadores
+        <CadastroIndicadores
           :is-novo="view === 'novo'"
-          :operador="selectedOperador"
+          :indicador="selectedIndicador"
           @voltar="handleVoltar"
-          @salvo="fetchOperadores"
+          @salvo="fetchIndicadores"
         />
       </div>
     </Transition>
@@ -68,8 +73,8 @@
     <!-- Modal de Confirmação de Exclusão -->
     <BaseModalConfirm
       :show="showModalExcluir"
-      title="Excluir Operador"
-      :message="`Tem certeza que deseja excluir o operador ${operadorParaExcluir?.name}? Essa ação não poderá ser desfeita.`"
+      title="Excluir Indicador"
+      :message="`Tem certeza que deseja excluir o indicador ${indicadorParaExcluir?.name}? Essa ação não poderá ser desfeita.`"
       confirm-text="Excluir"
       variant="danger"
       :loading="excluindo"
@@ -80,34 +85,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Plus, Search } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
-import { useOperadores } from '~/composables/useOperadores'
-import type { Operador } from '~/types/operador'
+import { useIndicadores } from '~/composables/useIndicadores'
 
-const { 
-  operadoresFiltrados, 
-  loading, 
-  search, 
-  fetchOperadores, 
-  deleteOperador 
-} = useOperadores()
+const {
+  indicadores,
+  indicadoresFiltrados,
+  loading,
+  search,
+  fetchIndicadores,
+  deleteIndicador
+} = useIndicadores()
 
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 
 // Navegação interna
 const view = ref<'lista' | 'novo' | 'editar'>('lista')
-const selectedOperador = ref<Operador | null>(null)
+const selectedIndicador = ref<any | null>(null)
 
 // Estado para Exclusão
 const showModalExcluir = ref(false)
-const operadorParaExcluir = ref<Operador | null>(null)
+const indicadorParaExcluir = ref<any | null>(null)
 const excluindo = ref(false)
 
+// Carregar dados ao montar
 onMounted(async () => {
-  await fetchOperadores()
+  await fetchIndicadores()
 })
 
 // Resetar página ao buscar
@@ -116,46 +122,46 @@ watch(search, () => {
 })
 
 const handleNovo = () => {
-  selectedOperador.value = null
+  selectedIndicador.value = null
   view.value = 'novo'
 }
 
-const handleEdit = (operador: Operador) => {
-  selectedOperador.value = { ...operador }
+const handleEdit = (item: any) => {
+  selectedIndicador.value = { ...item }
   view.value = 'editar'
 }
 
 const handleVoltar = () => {
   view.value = 'lista'
-  selectedOperador.value = null
+  selectedIndicador.value = null
 }
 
-const handleDelete = (operador: Operador) => {
-  operadorParaExcluir.value = operador
+const handleDelete = (item: any) => {
+  indicadorParaExcluir.value = item
   showModalExcluir.value = true
 }
 
 function cancelarExclusao() {
   showModalExcluir.value = false
-  operadorParaExcluir.value = null
+  indicadorParaExcluir.value = null
 }
 
 const confirmarExclusao = async () => {
-  if (!operadorParaExcluir.value) return
+  if (!indicadorParaExcluir.value) return
   
   excluindo.value = true
   
   try {
-    const result = await deleteOperador(operadorParaExcluir.value.id)
+    const result = await deleteIndicador(indicadorParaExcluir.value.id)
     if (result.success) {
-      toast.success('Operador excluído!', {
-        description: `O operador ${operadorParaExcluir.value.name} foi removido.`
+      toast.success('Indicador excluído!', {
+        description: `O indicador ${indicadorParaExcluir.value.name} foi removido.`
       })
-      await fetchOperadores()
+      await fetchIndicadores()
       cancelarExclusao()
     } else {
-      toast.error('Erro ao excluir operador', { 
-        description: result.error || 'Não foi possível completar a ação.' 
+      toast.error('Erro ao excluir indicador', { 
+        description: 'Não foi possível completar a ação.' 
       })
     }
   } catch (error: any) {

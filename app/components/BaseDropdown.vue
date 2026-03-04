@@ -7,7 +7,7 @@
     <button
       type="button"
       @click="!disabled && toggleDropdown()"
-      class="relative w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm pl-4 pr-10 py-3 text-left cursor-default focus:outline-none focus:border-primary-400 focus:ring-0 focus:shadow-[0_0_5px_rgba(1,87,60,0.15)] dark:focus:shadow-[0_0_10px_rgba(74,222,128,0.3)] sm:text-sm"
+      class="relative w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm pl-4 pr-10 py-2 text-left cursor-default focus:outline-none focus:border-primary-400 focus:ring-0 focus:shadow-[0_0_5px_rgba(1,87,60,0.15)] dark:focus:shadow-[0_0_10px_rgba(74,222,128,0.3)] sm:text-sm"
       :class="{ 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900': disabled }"
       aria-haspopup="listbox"
       :aria-expanded="isOpen"
@@ -21,12 +21,13 @@
       </span>
     </button>
 
+    <!-- Painel de opções: abre para baixo ou para cima conforme espaço -->
     <div
       v-if="isOpen"
-      class="absolute z-10 mt-1 w-full bg-white dark:bg-slate-800 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm slide-down-fade"
+      class="absolute z-[100] top-full mt-1 w-full bg-white dark:bg-slate-800 shadow-lg max-h-60 rounded-md text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm slide-down-fade custom-scrollbar"
     >
       <!-- Search Input -->
-      <div v-if="searchable" class="sticky top-0 z-10 bg-white dark:bg-slate-800 p-2 border-b border-slate-100 dark:border-slate-700">
+      <div v-if="searchable" class="sticky top-0 z-[60] bg-white dark:bg-slate-800 p-2 border-b border-slate-100 dark:border-slate-700">
         <div class="relative">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
@@ -167,5 +168,45 @@ onUnmounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ── Scrollbar elegante ──────────────────────────── */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent; /* thumb | track */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 99px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #01573c; /* primary */
+}
+
+/* Dark mode */
+:global(.dark) .custom-scrollbar {
+  scrollbar-color: #334155 transparent;
+}
+
+:global(.dark) .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #334155;
+}
+
+:global(.dark) .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #4ade80;
 }
 </style>

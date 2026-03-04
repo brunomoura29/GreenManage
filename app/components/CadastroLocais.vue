@@ -131,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { ArrowLeft, Loader2, Camera, Upload, Trash2 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { Local } from '~/types/local'
@@ -173,6 +173,12 @@ watch(() => props.local, (l) => {
   selectedFile.value = null
 }, { immediate: true })
 
+onUnmounted(() => {
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
+})
+
 function triggerFileInput() {
   fileInputRef.value?.click()
 }
@@ -211,13 +217,13 @@ async function uploadImagem(): Promise<string | null> {
     const filePath = `locais/${fileName}`
 
     const { error: uploadError } = await supabase.storage
-      .from('locais')
+      .from('imagens')
       .upload(filePath, file)
 
     if (uploadError) throw uploadError
 
     const { data: { publicUrl } } = supabase.storage
-      .from('locais')
+      .from('imagens')
       .getPublicUrl(filePath)
 
     return publicUrl
