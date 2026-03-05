@@ -115,6 +115,9 @@ const medicaoParaExcluir = ref<ViewMedicoesCompleta | null>(null)
 const excluindo = ref(false)
 
 const { deleteMedicao } = useMedicoes()
+const { deleteRegistrosByMedicao: deleteIndicadoresByMedicao } = useRegistroIndicadores()
+const { deleteRegistrosByMedicao: deleteValoresByMedicao } = useRegistroValorMedicao()
+const { deleteLagoasByMedicao } = useLagoasBaixadas()
 
 // Resetar página ao buscar
 watch(search, () => {
@@ -162,6 +165,24 @@ async function confirmDelete() {
   if (!medicaoParaExcluir.value) return
 
   excluindo.value = true
+
+  // 1. Deletar TODOS os registros filhos em paralelo (cascata manual)
+  const uniqueId = medicaoParaExcluir.value.medicao_unique_id ?? ''
+  const [resIndicadores, resValores, resLagoas] = await Promise.all([
+    uniqueId ? deleteIndicadoresByMedicao(uniqueId) : Promise.resolve({ success: true }),
+    uniqueId ? deleteValoresByMedicao(uniqueId)    : Promise.resolve({ success: true }),
+    uniqueId ? deleteLagoasByMedicao(uniqueId)     : Promise.resolve({ success: true })
+  ])
+
+  if (!resIndicadores.success || !resValores.success || !resLagoas.success) {
+    excluindo.value = false
+    toast.error('Erro ao excluir registros vinculados', {
+      description: (resIndicadores as any).error || (resValores as any).error || (resLagoas as any).error || 'Ocorreu um problema ao tentar excluir os registros vinculados.'
+    })
+    return
+  }
+
+  // 2. Deletar a medição
   const result = await deleteMedicao(medicaoParaExcluir.value.medicao_id)
   excluindo.value = false
 

@@ -109,6 +109,9 @@
       </div>
     </div>
 
+    <!-- Tabela Registro Medições -->
+    <KIPTabelaRegistroMedicoes />
+
     <!-- Últimos Manifestos (Table) -->
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-soft border border-slate-100 dark:border-slate-700 p-6">
        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">

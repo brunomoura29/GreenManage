@@ -668,14 +668,19 @@ async function salvarMedicao() {
     // 4. Salvar indicadores + turnos
     // ─────────────────────────────────────────────────────
     for (const ind of indicadoresSelecionados.value) {
-      // 4a. Cria registro_indicadores
-      await createRegistroIndicador({
-        unique_id:        `ri_${Date.now()}_${ind.uniqueId}`,
+      // 4a. Cria registro_indicadores e captura o unique_id gerado
+      const riUniqueId = `ri_${Date.now()}_${ind.uniqueId}`
+      const riResult = await createRegistroIndicador({
+        unique_id:        riUniqueId,
         measurement:      medicaoUniqueId,
         indicator:        ind.uniqueId,
         measurement_type: form.value.tipoMedicao || null,
         user_id:          userId,
       })
+
+      // unique_id real retornado pelo banco (pode diferir se o banco gerar o seu)
+      const registroIndicadorUniqueId: string =
+        (riResult as any)?.data?.unique_id ?? riUniqueId
 
       // 4b. Coleta os turnos do componente filho
       const ref = refsIndicadores.get(ind.uniqueId)
@@ -705,14 +710,15 @@ async function salvarMedicao() {
           : null
 
         await createRegistroValor({
-          unique_id:   `rv_${Date.now()}_${ind.uniqueId}`,
-          measurement: medicaoUniqueId,
-          indicator:   ind.uniqueId,
-          value:       turno.valor ?? null,
-          operator:    turno.operador   || null,
-          date_range:  turnoRange,
-          photos:      photoUrl,
-          user_id:     userId,
+          unique_id:       `rv_${Date.now()}_${ind.uniqueId}`,
+          measurement:     medicaoUniqueId,
+          indicator:       ind.uniqueId,
+          indicator_value: registroIndicadorUniqueId,  // ← FK para registro_indicadores.unique_id
+          value:           turno.valor ?? null,
+          operator:        turno.operador   || null,
+          date_range:      turnoRange,
+          photos:          photoUrl,
+          user_id:         userId,
         })
       }
     }
