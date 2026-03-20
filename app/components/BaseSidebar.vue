@@ -282,7 +282,7 @@ const menuItems = [
     label: 'Resíduos', 
     icon: Recycle, 
     children: [
-      { label: 'Entradas', path: '/residuos/entradas', icon: ArrowRight }, 
+      { label: 'Entradas', path: '/transacao_entradas', icon: ArrowRight },
       { label: 'Transições Internas', path: '/residuos/transicoes', icon: ArrowRightLeft }, 
       { label: 'Saídas', path: '/residuos/saidas', icon: ArrowLeft }, 
       { label: 'Tipos de Resíduos', path: '/residuos/tipos', icon: Layers }, 
