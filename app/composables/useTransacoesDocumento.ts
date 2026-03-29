@@ -1,9 +1,14 @@
-import type { TransacaoListaEntrada, TransacaoListaEntradaInsert, TransacaoListaEntradaUpdate } from '~/types/transacaoListaEntrada'
+/**
+ * useTransacoesDocumento – Composable CRUD para a tabela `transacoes_documento`
+ */
 
-export const useTransacoesListaEntrada = () => {
+import type { TransacaoDocumento, TransacaoDocumentoInsert, TransacaoDocumentoUpdate } from '~/types/transacaoDocumento'
+export type { TransacaoDocumento, TransacaoDocumentoInsert, TransacaoDocumentoUpdate }
+
+export const useTransacoesDocumento = () => {
     const supabase = useSupabaseClient() as any
 
-    const transacoes = ref<TransacaoListaEntrada[]>([])
+    const documentos = ref<TransacaoDocumento[]>([])
     const loading = ref(false)
     const error = ref<string | null>(null)
 
@@ -19,28 +24,30 @@ export const useTransacoesListaEntrada = () => {
         return { success: false, data: null, error: error.value }
     }
 
-    // ── READ – listar todos ───────────────────────────────────────────────────
+    // ── READ – listar por empresa ─────────────────────────────────────────────
 
-    async function fetchTransacoes() {
+    async function fetchDocumentos() {
         setLoading(true)
+
         const { data, error: err } = await supabase
-            .from('view_transacoes_entrada_resumo')
+            .from('transacoes_documento')
             .select('*')
-            .order('date', { ascending: false })
+            .order('collection_date', { ascending: false })
 
         setLoading(false)
         if (err) return handleError(err)
 
-        transacoes.value = (data as TransacaoListaEntrada[]) ?? []
-        return { success: true, data: transacoes.value, error: null }
+        documentos.value = (data as TransacaoDocumento[]) ?? []
+        return { success: true, data: documentos.value, error: null }
     }
 
     // ── READ – buscar por unique_id ───────────────────────────────────────────
 
-    async function fetchTransacaoByUniqueId(uniqueId: string) {
+    async function fetchDocumentoByUniqueId(uniqueId: string) {
         setLoading(true)
+
         const { data, error: err } = await supabase
-            .from('transacoes_lista_entrada')
+            .from('transacoes_documento')
             .select('*')
             .eq('unique_id', uniqueId)
             .single()
@@ -48,57 +55,49 @@ export const useTransacoesListaEntrada = () => {
         setLoading(false)
         if (err) return handleError(err)
 
-        return { success: true, data: data as TransacaoListaEntrada, error: null }
+        return { success: true, data: data as TransacaoDocumento, error: null }
+    }
+
+    // ── READ – buscar pelo detalhe vinculado (residue = detalhe.unique_id) ────
+
+    async function fetchDocumentoByDetalheId(detalheUniqueId: string) {
+        const { data, error: err } = await supabase
+            .from('transacoes_documento')
+            .select('*')
+            .eq('residue', detalheUniqueId)
+            .maybeSingle()
+
+        if (err) return handleError(err)
+        return { success: true, data: data as TransacaoDocumento | null, error: null }
     }
 
     // ── CREATE ────────────────────────────────────────────────────────────────
 
-    async function createTransacao(payload: TransacaoListaEntradaInsert) {
+    async function createDocumento(payload: TransacaoDocumentoInsert) {
         setLoading(true)
-        const now = new Date().toISOString()
 
         const { data, error: err } = await supabase
-            .from('transacoes_lista_entrada')
-            .insert({
-                ...payload,
-                creation_date: now,
-                modified_date: now,
-            })
+            .from('transacoes_documento')
+            .insert(payload)
             .select()
             .single()
 
         setLoading(false)
         if (err) return handleError(err)
 
-        const created = data as TransacaoListaEntrada
-        transacoes.value.unshift(created)
+        const created = data as TransacaoDocumento
+        documentos.value.unshift(created)
         return { success: true, data: created, error: null }
-    }
-
-    // ── UPDATE – incrementar total_recebido ───────────────────────────────────
-
-    async function incrementTotalRecebido(uniqueId: string, volume: number) {
-        // Busca o valor atual e soma o novo volume atomicamente via RPC SQL
-        const { error: err } = await supabase.rpc('increment_total_recebido', {
-            p_unique_id: uniqueId,
-            p_volume: volume,
-        })
-
-        if (err) return handleError(err)
-        return { success: true, data: null, error: null }
     }
 
     // ── UPDATE ────────────────────────────────────────────────────────────────
 
-    async function updateTransacao(id: string, payload: TransacaoListaEntradaUpdate) {
+    async function updateDocumento(id: string, payload: TransacaoDocumentoUpdate) {
         setLoading(true)
 
         const { data, error: err } = await supabase
-            .from('transacoes_lista_entrada')
-            .update({
-                ...payload,
-                modified_date: new Date().toISOString(),
-            })
+            .from('transacoes_documento')
+            .update(payload)
             .eq('id', id)
             .select()
             .single()
@@ -106,39 +105,38 @@ export const useTransacoesListaEntrada = () => {
         setLoading(false)
         if (err) return handleError(err)
 
-        const updated = data as TransacaoListaEntrada
-        const index = transacoes.value.findIndex((t) => t.id === id)
-        if (index !== -1) transacoes.value[index] = updated
-
+        const updated = data as TransacaoDocumento
+        const index = documentos.value.findIndex((d) => d.id === id)
+        if (index !== -1) documentos.value[index] = updated
         return { success: true, data: updated, error: null }
     }
 
     // ── DELETE ────────────────────────────────────────────────────────────────
 
-    async function deleteTransacao(id: string) {
+    async function deleteDocumento(id: string) {
         setLoading(true)
 
         const { error: err } = await supabase
-            .from('transacoes_lista_entrada')
+            .from('transacoes_documento')
             .delete()
             .eq('id', id)
 
         setLoading(false)
         if (err) return handleError(err)
 
-        transacoes.value = transacoes.value.filter((t) => t.id !== id)
+        documentos.value = documentos.value.filter((d) => d.id !== id)
         return { success: true, data: null, error: null }
     }
 
     return {
-        transacoes,
+        documentos,
         loading,
         error,
-        fetchTransacoes,
-        fetchTransacaoByUniqueId,
-        createTransacao,
-        updateTransacao,
-        deleteTransacao,
-        incrementTotalRecebido,
+        fetchDocumentos,
+        fetchDocumentoByUniqueId,
+        fetchDocumentoByDetalheId,
+        createDocumento,
+        updateDocumento,
+        deleteDocumento,
     }
 }

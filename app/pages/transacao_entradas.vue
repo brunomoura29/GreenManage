@@ -23,9 +23,10 @@
             </p>
           </div>
 
-          <!-- Botão nova transação -->
+          <!-- Nova Entrada → oculto quando há entrada selecionada -->
           <button
-            @click="view = 'cadastrar'"
+            v-if="!entradaAtiva"
+            @click="exibindoModalCriar = true"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-600 active:scale-95 transition-all shadow-soft shrink-0"
           >
             <Plus class="w-4 h-4" />
@@ -53,19 +54,57 @@
             :loading="loading"
             v-model:current-page="paginaAtual"
             :items-per-page="itensPorPagina"
+            :reabrir-entrada="entradaParaReabrir"
             @edit="handleEdit"
             @delete="handleDelete"
+            @add-detalhe="handleAddDetalhe"
+            @edit-detalhe="handleEditDetalhe"
+            @entrada-ativa="entradaAtiva = $event"
           />
         </div>
 
       </div>
 
-      <!-- ── Cadastrar / Editar ──────────── -->
-      <div v-else key="cadastrar">
-        <!-- CadastroTransacaoEntradas será criado aqui -->
+      <!-- ── Nova Entrada (Resíduo completo) ──────────── -->
+      <div v-else-if="view === 'nova-entrada'" key="nova-entrada">
+        <ResiduosFormNovaEntradaResiduo
+          :is-novo="true"
+          @voltar="voltarParaLista"
+          @salvo="onSalvo"
+        />
       </div>
+
+      <!-- ── Novo Detalhe (em entrada existente) ──────── -->
+      <div v-else-if="view === 'novo-detalhe'" key="novo-detalhe">
+        <ResiduosFormNovaEntradaResiduo
+          :is-novo="true"
+          :entrada-id="transacaoEditando?.unique_id"
+          :entrada-date="transacaoEditando?.date"
+          @voltar="voltarParaDetalhes"
+          @salvo="onSalvoDetalhe"
+        />
+      </div>
+
+      <!-- ── Editar Detalhe ────────────────────────────── -->
+      <div v-else-if="view === 'editar-detalhe'" key="editar-detalhe">
+        <ResiduosFormNovaEntradaResiduo
+          :is-novo="false"
+          :detalhe="detalheEditando"
+          :entrada-date="transacaoEditando?.date"
+          @voltar="voltarParaDetalhes"
+          @salvo="onSalvoDetalhe"
+        />
+      </div>
+
     </Transition>
   </div>
+
+  <!-- Modal Criar Operação Diária -->
+  <ResiduosModalCriarOperacaoDiaria
+    :show="exibindoModalCriar"
+    @fechar="exibindoModalCriar = false"
+    @criado="onEntradaCriada"
+  />
 
   <!-- Modal de Confirmação de Exclusão -->
   <BaseModalConfirm
@@ -85,6 +124,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { Plus, Search } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { TransacaoListaEntrada } from '~/types/transacaoListaEntrada'
+import type { TransacaoListaDetalhe } from '~/types/transacaoListaDetalhe'
 
 const {
   transacoes,
@@ -97,8 +137,14 @@ const search = ref('')
 const paginaAtual = ref(1)
 const itensPorPagina = ref(10)
 
-const view = ref<'lista' | 'cadastrar'>('lista')
+const view = ref<'lista' | 'nova-entrada' | 'novo-detalhe' | 'editar-detalhe'>('lista')
 const transacaoEditando = ref<TransacaoListaEntrada | null>(null)
+const detalheEditando = ref<TransacaoListaDetalhe | null>(null)
+
+// Estado modal criar
+const exibindoModalCriar = ref(false)
+const entradaAtiva = ref(false)
+const entradaParaReabrir = ref<TransacaoListaEntrada | null>(null)
 
 // Estados para Exclusão
 const exibindoModalExcluir = ref(false)
@@ -122,9 +168,24 @@ onMounted(async () => {
   await fetchTransacoes()
 })
 
+async function onEntradaCriada(_transacao: TransacaoListaEntrada) {
+  await fetchTransacoes()
+}
+
+function handleEditDetalhe(detalhe: TransacaoListaDetalhe) {
+  detalheEditando.value = { ...detalhe }
+  transacaoEditando.value = transacoes.value.find(t => t.unique_id === detalhe.residue_operation) ?? null
+  view.value = 'editar-detalhe'
+}
+
+function handleAddDetalhe(transacao: TransacaoListaEntrada) {
+  transacaoEditando.value = { ...transacao }
+  view.value = 'novo-detalhe'
+}
+
 function handleEdit(transacao: TransacaoListaEntrada) {
   transacaoEditando.value = { ...transacao }
-  view.value = 'cadastrar'
+  view.value = 'nova-entrada'
 }
 
 function handleDelete(transacao: TransacaoListaEntrada) {
@@ -158,6 +219,19 @@ async function onSalvo() {
 
 function voltarParaLista() {
   transacaoEditando.value = null
+  entradaParaReabrir.value = null
   view.value = 'lista'
 }
+
+function voltarParaDetalhes() {
+  entradaParaReabrir.value = transacaoEditando.value
+  view.value = 'lista'
+}
+
+async function onSalvoDetalhe() {
+  entradaParaReabrir.value = transacaoEditando.value
+  await fetchTransacoes()
+  view.value = 'lista'
+}
+
 </script>

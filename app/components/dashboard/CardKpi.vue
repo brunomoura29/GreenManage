@@ -1,10 +1,10 @@
 <template>
   <div class="bg-white dark:bg-slate-800 px-6 pt-6 pb-8 rounded-xl shadow-soft border border-emerald-100/50 dark:border-slate-700 flex flex-col justify-between h-36 relative overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-    
+
     <!-- Top Row: Icon & Trend -->
     <div class="flex justify-between items-start z-10">
       <!-- Icon Wrapper -->
-      <div 
+      <div
         class="p-2.5 rounded-lg transition-colors"
         :class="iconBgClass"
       >
@@ -12,9 +12,9 @@
       </div>
 
       <!-- Trend Indicator -->
-      <div 
+      <div
         v-if="trend"
-        class="flex items-center text-xs font-semibold px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-800" 
+        class="flex items-center text-xs font-semibold px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-800"
         :class="trendUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'"
       >
         <ArrowUp v-if="trendUp" class="w-3 h-3 mr-1" />

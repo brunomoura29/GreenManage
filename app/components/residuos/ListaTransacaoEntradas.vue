@@ -21,6 +21,7 @@
               <tr>
                 <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">Data</th>
                 <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">Qtd Registros</th>
+                <th class="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">Total Recebido</th>
                 <th class="px-4 py-3 w-20 text-center font-semibold text-slate-500 dark:text-slate-400 text-xs tracking-wider">Ações</th>
               </tr>
             </thead>
@@ -46,7 +47,7 @@
               <tr
                 v-else
                 v-for="item in paginatedTransacoes"
-                :key="item.unique_id"
+                :key="item.unique_id ?? item.id"
                 class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
               >
                 <td class="px-4 py-3">
@@ -62,6 +63,13 @@
                     <ClipboardList class="w-3 h-3" />
                     {{ item.qtd_registros ?? 0 }}
                   </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span v-if="parseFloat(String(item.total_recebido ?? 0)) > 0" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    <Droplets class="w-3 h-3" />
+                    {{ formatVolume(item.total_recebido) }} m³
+                  </span>
+                  <span v-else class="text-xs text-slate-400 dark:text-slate-500">—</span>
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-center gap-1">
@@ -115,7 +123,12 @@
                 </div>
                 <div class="min-w-0">
                   <p class="font-semibold text-slate-900 dark:text-white truncate">{{ formatData(item.date) }}</p>
-                  <p class="text-xs font-semibold text-primary-600 dark:text-primary-400 mt-0.5">{{ item.qtd_registros ?? 0 }} registro(s)</p>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <p class="text-xs font-semibold text-primary-600 dark:text-primary-400">{{ item.qtd_registros ?? 0 }} registro(s)</p>
+                    <span v-if="parseFloat(String(item.total_recebido ?? 0)) > 0" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      · {{ formatVolume(item.total_recebido) }} m³
+                    </span>
+                  </div>
                 </div>
               </div>
               <div class="flex items-center gap-1 shrink-0">
@@ -147,18 +160,28 @@
       <div v-else key="detalhes">
 
         <!-- Header com voltar -->
-        <div class="flex items-center gap-3 mb-4">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <button
+              @click="fecharDetalhes"
+              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <ArrowLeft class="w-4 h-4" />
+              Voltar
+            </button>
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-700" />
+            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Registros de <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ formatData(entradaSelecionada.date) }}</span>
+            </span>
+          </div>
+
           <button
-            @click="fecharDetalhes"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            @click="$emit('add-detalhe', entradaSelecionada)"
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all"
           >
-            <ArrowLeft class="w-4 h-4" />
-            Voltar
+            <FilePlus class="w-4 h-4" />
+            Adicionar Detalhe
           </button>
-          <div class="h-4 w-px bg-slate-200 dark:bg-slate-700" />
-          <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Registros de <span class="text-primary-600 dark:text-primary-400 font-semibold">{{ formatData(entradaSelecionada.date) }}</span>
-          </span>
         </div>
 
         <!-- Loading -->
@@ -173,7 +196,7 @@
           :current-page="paginaDetalhes"
           :items-per-page="10"
           @update:current-page="paginaDetalhes = $event"
-          @edit="$emit('editDetalhe', $event)"
+          @edit="$emit('edit-detalhe', $event)"
           @delete="$emit('deleteDetalhe', $event)"
         />
 
@@ -184,8 +207,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Trash2, CalendarDays, ArrowDownToLine, ClipboardList, Eye, ArrowLeft } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
+import { Trash2, CalendarDays, ArrowDownToLine, ClipboardList, Eye, ArrowLeft, FilePlus, Droplets } from 'lucide-vue-next'
 import type { TransacaoListaEntrada } from '~/types/transacaoListaEntrada'
 import type { TransacaoListaDetalhe } from '~/types/transacaoListaDetalhe'
 
@@ -194,19 +217,27 @@ const props = defineProps<{
   loading?: boolean
   currentPage: number
   itemsPerPage: number
+  reabrirEntrada?: TransacaoListaEntrada | null
 }>()
 
 const emit = defineEmits<{
   delete: [item: TransacaoListaEntrada]
-  editDetalhe: [item: TransacaoListaDetalhe]
+  'edit-detalhe': [item: TransacaoListaDetalhe]
   deleteDetalhe: [item: TransacaoListaDetalhe]
+  'add-detalhe': [item: TransacaoListaEntrada]
   'update:currentPage': [page: number]
+  'entrada-ativa': [ativa: boolean]
 }>()
 
 const { detalhes, loading: loadingDetalhes, fetchDetalhesByEntrada } = useTransacoesListaDetalhe()
 
 const entradaSelecionada = ref<TransacaoListaEntrada | null>(null)
 const paginaDetalhes = ref(1)
+
+// Reabre automaticamente a entrada quando voltando do formulário de detalhe
+watch(() => props.reabrirEntrada, (entrada) => {
+  if (entrada) abrirDetalhes(entrada)
+}, { immediate: true })
 
 const paginatedTransacoes = computed(() => {
   const start = (props.currentPage - 1) * props.itemsPerPage
@@ -218,11 +249,19 @@ async function abrirDetalhes(item: TransacaoListaEntrada) {
   if (!item.unique_id) return
   entradaSelecionada.value = item
   paginaDetalhes.value = 1
+  emit('entrada-ativa', true)
   await fetchDetalhesByEntrada(item.unique_id)
 }
 
 function fecharDetalhes() {
   entradaSelecionada.value = null
+  emit('entrada-ativa', false)
+}
+
+function formatVolume(value: number | string | null | undefined): string {
+  const n = parseFloat(String(value ?? '0'))
+  if (isNaN(n)) return '0,00'
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function formatData(date: string | null | undefined): string {

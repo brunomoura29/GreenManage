@@ -35,5 +35,8 @@ export interface TransacaoListaDetalhe {
     nome_cliente?: string | null
 }
 
-export type TransacaoListaDetalheInsert = Omit<TransacaoListaDetalhe, 'id' | 'creation_date' | 'modified_date'>
-export type TransacaoListaDetalheUpdate = Partial<TransacaoListaDetalheInsert>
+// Campos somente de view/JOIN — nunca devem ser enviados no insert/update
+type ViewOnlyFields = 'nota_fiscal' | 'mtr' | 'mtrs_transportadora' | 'cliente_id' | 'nome_transportadora' | 'nome_residue_type' | 'nome_cliente'
+
+export type TransacaoListaDetalheInsert = Omit<TransacaoListaDetalhe, 'id' | 'creation_date' | 'modified_date' | ViewOnlyFields>
+export type TransacaoListaDetalheUpdate = Partial<Omit<TransacaoListaDetalheInsert, 'unique_id'>>
