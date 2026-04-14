@@ -298,8 +298,8 @@ const menuItems = [
     label: 'Estoque', 
     icon: Package, 
     children: [
-      { label: 'Químicos', path: '/estoque/quimicos', icon: Container }, 
-      { label: 'Movimentações', path: '/estoque/movimentacoes', icon: Replace }
+      { label: 'Químicos', path: '/insumos', icon: Container },
+      { label: 'Movimentações', path: '/movimentacoes_estoque', icon: Replace }
     ] 
   },
   { 
