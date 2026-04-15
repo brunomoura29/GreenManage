@@ -126,10 +126,10 @@
                 Nº da Descarga
               </label>
               <input
-                v-model="form.discharge_number"
+                :value="form.discharge_number ?? '—'"
                 type="text"
-                placeholder="Ex: 001"
-                class="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+                readonly
+                class="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-not-allowed"
               />
             </div>
 
@@ -878,6 +878,7 @@ import { useClientes } from '~/composables/useClientes'
 import type { Cliente } from '~/types/cliente'
 import { useTransacoesDocumento } from '~/composables/useTransacoesDocumento'
 import { buscarManifestoSinir } from '~/api/sinir'
+import { extrairNFdaObservacao } from '~/utils/sinirUtils'
 import type { SinirManifesto } from '~/types/sinir'
 
 // ── Props & Emits ─────────────────────────────────────────────────────────────
@@ -893,7 +894,7 @@ const emit = defineEmits<{ voltar: []; salvo: [] }>()
 // ── Composables ───────────────────────────────────────────────────────────────
 
 const supabase = useSupabaseClient()
-const { detalhes, fetchDetalhes, createDetalhe, updateDetalhe } = useTransacoesListaDetalhe()
+const { detalhes, fetchDetalhes, createDetalhe, updateDetalhe, proximoDischargeNumber } = useTransacoesListaDetalhe()
 const { createTransacao, incrementTotalRecebido } = useTransacoesListaEntrada()
 const { getCompanyId, fetchEmpresaDoUsuario, empresa } = useEmpresas()
 const { transportadoras, fetchTransportadoras, createTransportadora } = useTransportadoras()
@@ -1275,6 +1276,7 @@ async function preencherDoManifesto(manifesto: SinirManifesto) {
   mtrDocumentoBusca.value = manifesto.manNumero
   form.value.data_coleta = tsToDateStr(manifesto.manData)
   form.value.date = tsToDateStr(manifesto.manDataExpedicao)
+  form.value.nota_fiscal = extrairNFdaObservacao(manifesto.manObservacao)
 
   // Veículo
   if (manifesto.manPlacaVeiculo) {
@@ -1392,6 +1394,11 @@ onMounted(async () => {
     fetchLocais(),
     fetchOperadores(),
   ])
+
+  // Modo adicionar detalhe: preenche o número de descarga sequencial
+  if (props.isNovo && props.entradaId) {
+    form.value.discharge_number = await proximoDischargeNumber(props.entradaId)
+  }
 
   // Modo edição: busca o documento vinculado e popula o form
   if (!props.isNovo && props.detalhe) {
@@ -1521,25 +1528,41 @@ async function salvar() {
         await incrementTotalRecebido(props.detalhe.residue_operation, delta)
       }
 
-      // Atualiza o documento vinculado (MTR, NF, transportadora, veículo, etc.)
+      // Atualiza ou cria o documento vinculado (MTR, NF, transportadora, veículo, etc.)
+      const docPayload = {
+        carrier: form.value.carrier,
+        driver: form.value.motorista_id,
+        generator: geradorSelecionado.value?.unique_id ?? null,
+        vehicle: veiculoSelecionado.value?.unique_id ?? null,
+        residue_type: form.value.residue_type,
+        residue_class_code: form.value.class_code,
+        collection_date: form.value.data_coleta ? new Date(form.value.data_coleta).toISOString() : null,
+        receipt_date: form.value.date ? new Date(form.value.date).toISOString() : null,
+        discharge_number: form.value.discharge_number,
+        manifest_number: form.value.mtr,
+        nota_fiscal: form.value.nota_fiscal,
+        residue_description: form.value.description_resiudo,
+        volume: form.value.volume_in_m3,
+        mtrs_transportadora: form.value.mtrs_transportadora.filter(Boolean).length
+          ? form.value.mtrs_transportadora.filter(Boolean)
+          : null,
+      }
+
       if (documentoEditandoId.value) {
-        await updateDocumento(documentoEditandoId.value, {
-          carrier: form.value.carrier,
-          driver: form.value.motorista_id,
-          generator: geradorSelecionado.value?.unique_id ?? null,
-          vehicle: veiculoSelecionado.value?.unique_id ?? null,
-          residue_type: form.value.residue_type,
-          residue_class_code: form.value.class_code,
-          collection_date: form.value.data_coleta ? new Date(form.value.data_coleta).toISOString() : null,
-          receipt_date: form.value.date ? new Date(form.value.date).toISOString() : null,
-          discharge_number: form.value.discharge_number,
-          manifest_number: form.value.mtr,
-          nota_fiscal: form.value.nota_fiscal,
-          residue_description: form.value.description_resiudo,
-          volume: form.value.volume_in_m3,
-          mtrs_transportadora: form.value.mtrs_transportadora.filter(Boolean).length
-            ? form.value.mtrs_transportadora.filter(Boolean)
-            : null,
+        const docResult = await updateDocumento(documentoEditandoId.value, docPayload)
+        if (!docResult?.success) {
+          toast.error('Erro ao atualizar documento', { description: docResult?.error ?? 'Tente novamente.' })
+          return
+        }
+      } else if (props.detalhe?.unique_id) {
+        // Detalhe sem documento vinculado (registro antigo) — cria agora
+        await createDocumento({
+          unique_id: `doc_${Date.now()}`,
+          user_id: userId,
+          company,
+          residue: props.detalhe.unique_id,
+          mtr_transportadora_old: null,
+          ...docPayload,
         })
       }
 

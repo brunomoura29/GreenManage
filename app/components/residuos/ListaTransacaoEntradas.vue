@@ -175,13 +175,16 @@
             </span>
           </div>
 
-          <button
-            @click="$emit('add-detalhe', entradaSelecionada)"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all"
-          >
-            <FilePlus class="w-4 h-4" />
-            Adicionar Detalhe
-          </button>
+          <div class="flex items-center gap-2">
+            <ResiduosFiltrosDetalhe :detalhes="detalhes" />
+            <button
+              @click="$emit('add-detalhe', entradaSelecionada)"
+              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all"
+            >
+              <FilePlus class="w-4 h-4" />
+              Adicionar Detalhe
+            </button>
+          </div>
         </div>
 
         <!-- Loading -->
@@ -192,7 +195,7 @@
         <!-- Tabela de detalhes -->
         <ResiduosListaTransacaoDetalhe
           v-else
-          :detalhes="detalhes"
+          :detalhes="detalhesFiltrados"
           :current-page="paginaDetalhes"
           :items-per-page="10"
           @update:current-page="paginaDetalhes = $event"
@@ -243,6 +246,9 @@ const emit = defineEmits<{
 }>()
 
 const { detalhes, loading: loadingDetalhes, fetchDetalhesByEntrada, deleteDetalhe } = useTransacoesListaDetalhe()
+const { filtrarDetalhes } = useTransacoesDetalhesFiltros()
+
+const detalhesFiltrados = computed(() => filtrarDetalhes(detalhes.value))
 
 const entradaSelecionada = ref<TransacaoListaEntrada | null>(null)
 const paginaDetalhes = ref(1)

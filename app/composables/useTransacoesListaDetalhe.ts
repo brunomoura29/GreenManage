@@ -446,6 +446,13 @@ export const useTransacoesListaDetalhe = () => {
         return { atual, anterior, variacao, trendUp }
     }
 
+    // ── Próximo número de descarga sequencial ─────────────────────────────────
+
+    async function proximoDischargeNumber(residueOperation: string): Promise<string> {
+        const count = await fetchContagemByEntrada(residueOperation)
+        return String(count + 1)
+    }
+
     // ── DELETE – remover todos os detalhes de uma entrada ─────────────────────
 
     async function deleteDetalhesByEntrada(residueOperation: string) {
@@ -475,6 +482,7 @@ export const useTransacoesListaDetalhe = () => {
         updateDetalhe,
         deleteDetalhe,
         deleteDetalhesByEntrada,
+        proximoDischargeNumber,
         countManifestosMesAtual,
         calcularVariacaoManifestos,
         calcularVariacaoVolume,
