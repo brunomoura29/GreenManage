@@ -197,18 +197,31 @@
           :items-per-page="10"
           @update:current-page="paginaDetalhes = $event"
           @edit="$emit('edit-detalhe', $event)"
-          @delete="$emit('deleteDetalhe', $event)"
+          @delete="handleDeleteDetalhe"
         />
 
       </div>
 
     </Transition>
   </div>
+
+  <!-- Modal de Confirmação de Exclusão de Detalhe -->
+  <BaseModalConfirm
+    :show="exibindoModalExcluirDetalhe"
+    title="Excluir Registro"
+    :message="`Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.`"
+    confirm-text="Excluir"
+    variant="danger"
+    :loading="excluindoDetalhe"
+    @confirm="confirmDeleteDetalhe"
+    @cancel="exibindoModalExcluirDetalhe = false"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Trash2, CalendarDays, ArrowDownToLine, ClipboardList, Eye, ArrowLeft, FilePlus, Droplets } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 import type { TransacaoListaEntrada } from '~/types/transacaoListaEntrada'
 import type { TransacaoListaDetalhe } from '~/types/transacaoListaDetalhe'
 
@@ -229,10 +242,15 @@ const emit = defineEmits<{
   'entrada-ativa': [ativa: boolean]
 }>()
 
-const { detalhes, loading: loadingDetalhes, fetchDetalhesByEntrada } = useTransacoesListaDetalhe()
+const { detalhes, loading: loadingDetalhes, fetchDetalhesByEntrada, deleteDetalhe } = useTransacoesListaDetalhe()
 
 const entradaSelecionada = ref<TransacaoListaEntrada | null>(null)
 const paginaDetalhes = ref(1)
+
+// ── Exclusão de detalhe ───────────────────────────────────────────────────────
+const exibindoModalExcluirDetalhe = ref(false)
+const detalheParaExcluir = ref<TransacaoListaDetalhe | null>(null)
+const excluindoDetalhe = ref(false)
 
 // Reabre automaticamente a entrada quando voltando do formulário de detalhe
 watch(() => props.reabrirEntrada, (entrada) => {
@@ -251,6 +269,30 @@ async function abrirDetalhes(item: TransacaoListaEntrada) {
   paginaDetalhes.value = 1
   emit('entrada-ativa', true)
   await fetchDetalhesByEntrada(item.unique_id)
+}
+
+function handleDeleteDetalhe(detalhe: TransacaoListaDetalhe) {
+  detalheParaExcluir.value = detalhe
+  exibindoModalExcluirDetalhe.value = true
+}
+
+async function confirmDeleteDetalhe() {
+  if (!detalheParaExcluir.value) return
+  const detalhe = detalheParaExcluir.value
+  excluindoDetalhe.value = true
+  const result = await deleteDetalhe(detalhe.id)
+  excluindoDetalhe.value = false
+
+  if (result.success) {
+    toast.success('Registro excluído com sucesso!')
+    exibindoModalExcluirDetalhe.value = false
+    detalheParaExcluir.value = null
+    emit('deleteDetalhe', detalhe)
+  } else {
+    toast.error('Erro ao excluir registro', {
+      description: (result as any).error || 'Ocorreu um problema ao excluir o registro.'
+    })
+  }
 }
 
 function fecharDetalhes() {

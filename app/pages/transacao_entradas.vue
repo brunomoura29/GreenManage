@@ -59,6 +59,7 @@
             @delete="handleDelete"
             @add-detalhe="handleAddDetalhe"
             @edit-detalhe="handleEditDetalhe"
+            @deleteDetalhe="fetchTransacoes"
             @entrada-ativa="entradaAtiva = $event"
           />
         </div>

@@ -11,6 +11,7 @@
       </div>
       <div class="flex items-center gap-2">
         <button
+          v-if="turnos.length < 2"
           type="button"
           @click="adicionarTurno"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
@@ -215,18 +216,31 @@ const opcoesOperadores = computed(() =>
   props.operadores.map(o => ({ label: o.name || '', value: o.unique_id || o.id }))
 )
 
-function dataHoje(hora: string) {
-  const hoje = new Date()
-  const ano = hoje.getFullYear()
-  const mes = String(hoje.getMonth() + 1).padStart(2, '0')
-  const dia = String(hoje.getDate()).padStart(2, '0')
+function formatData(data: Date, hora: string) {
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
   return `${ano}-${mes}-${dia}T${hora}`
 }
 
+function dataHoje(hora: string) {
+  return formatData(new Date(), hora)
+}
+
+function dataAmanha(hora: string) {
+  const amanha = new Date()
+  amanha.setDate(amanha.getDate() + 1)
+  return formatData(amanha, hora)
+}
+
 function adicionarTurno() {
+  if (turnos.value.length >= 2) return
+
+  const ehNoturno = turnos.value.length === 1
+
   turnos.value.push({
-    periodoInicio: dataHoje('06:00'),
-    periodoFim: dataHoje('18:00'),
+    periodoInicio: ehNoturno ? dataHoje('18:00') : dataHoje('06:00'),
+    periodoFim:    ehNoturno ? dataAmanha('06:00') : dataHoje('18:00'),
     valor: null,
     operador: '',
     fotoFile: null,

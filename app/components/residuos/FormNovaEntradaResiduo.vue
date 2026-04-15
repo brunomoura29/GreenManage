@@ -903,7 +903,7 @@ const { clientes, fetchClientes, createCliente } = useClientes()
 const { tiposResiduos, fetchTiposResiduos } = useTiposResiduos()
 const { locais, fetchLocais } = useLocais()
 const { operadores, fetchOperadores } = useOperadores()
-const { createDocumento, fetchDocumentoByDetalheId } = useTransacoesDocumento()
+const { createDocumento, fetchDocumentoByDetalheId, updateDocumento } = useTransacoesDocumento()
 
 // ── Estado das abas ────────────────────────────────────────────────────────────
 
@@ -1201,6 +1201,7 @@ function fecharDropdowns(e: MouseEvent) {
 const salvando = ref(false)
 const buscandoMtr = ref(false)
 const geradorSelecionado = ref<Cliente | null>(null)
+const documentoEditandoId = ref<string | null>(null)
 
 // ── Utilidades SINIR ──────────────────────────────────────────────────────────
 
@@ -1397,6 +1398,7 @@ onMounted(async () => {
     const docRes = props.detalhe.unique_id
       ? await fetchDocumentoByDetalheId(props.detalhe.unique_id)
       : null
+    if (docRes?.data) documentoEditandoId.value = docRes.data.id
     popularFormDoDetalhe(props.detalhe, docRes?.data ?? null)
   }
 })
@@ -1517,6 +1519,28 @@ async function salvar() {
       const delta = newVolume - oldVolume
       if (delta !== 0 && props.detalhe.residue_operation) {
         await incrementTotalRecebido(props.detalhe.residue_operation, delta)
+      }
+
+      // Atualiza o documento vinculado (MTR, NF, transportadora, veículo, etc.)
+      if (documentoEditandoId.value) {
+        await updateDocumento(documentoEditandoId.value, {
+          carrier: form.value.carrier,
+          driver: form.value.motorista_id,
+          generator: geradorSelecionado.value?.unique_id ?? null,
+          vehicle: veiculoSelecionado.value?.unique_id ?? null,
+          residue_type: form.value.residue_type,
+          residue_class_code: form.value.class_code,
+          collection_date: form.value.data_coleta ? new Date(form.value.data_coleta).toISOString() : null,
+          receipt_date: form.value.date ? new Date(form.value.date).toISOString() : null,
+          discharge_number: form.value.discharge_number,
+          manifest_number: form.value.mtr,
+          nota_fiscal: form.value.nota_fiscal,
+          residue_description: form.value.description_resiudo,
+          volume: form.value.volume_in_m3,
+          mtrs_transportadora: form.value.mtrs_transportadora.filter(Boolean).length
+            ? form.value.mtrs_transportadora.filter(Boolean)
+            : null,
+        })
       }
 
       toast.success('Detalhe atualizado!', { description: 'As alterações foram salvas com sucesso.' })
