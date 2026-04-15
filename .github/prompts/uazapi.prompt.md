@@ -1,0 +1,1 @@
+https://docs.uazapi.com/schema/Instance

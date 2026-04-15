@@ -23,8 +23,11 @@
         <DashboardClassificacaoResiduos />
       </div>
 
+      <!-- Estoque Químicos -->
+      <DashboardKIPEstoqueQuimicos />
+
       <!-- Tabela Registro Medições -->
-      <KIPTabelaRegistroMedicoes />
+      <DashboardKIPTabelaRegistroMedicoes />
 
       <!-- Últimos Manifestos -->
       <DashboardUltimosManifestos />

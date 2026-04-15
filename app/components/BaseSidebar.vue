@@ -30,12 +30,14 @@
         <button
           v-for="item in menuItems"
           :key="item.label"
-          @click="handleParentClick(item)"
+          @click="!item.disabled && handleParentClick(item)"
           class="w-full flex items-center rounded-lg transition-colors group relative"
           :class="[
-            isParentActive(item)
-              ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' 
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200',
+            item.disabled
+              ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-slate-600'
+              : isParentActive(item)
+                ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200',
             isParentCollapsed ? 'justify-center py-3 px-0' : 'gap-3 px-3 py-3'
           ]"
         >
@@ -167,9 +169,35 @@
       <!-- Itens do filho -->
       <div class="flex-1 py-4 space-y-1" :class="[isChildCollapsed ? 'px-2 overflow-hidden' : 'px-3 overflow-y-auto']">
         <div v-for="(child, index) in activeChildren" :key="index">
-          <!-- Item com rota -->
-          <NuxtLink 
-            v-if="typeof child === 'object' && child.path"
+          <!-- Item com rota (desabilitado) -->
+          <div
+            v-if="typeof child === 'object' && child.path && child.disabled"
+            class="flex items-center rounded-lg relative cursor-not-allowed opacity-40"
+            :class="[isChildCollapsed ? 'justify-center py-3 px-0 w-full' : 'gap-3 px-3 py-2.5 w-full']"
+          >
+            <component
+              :is="child.icon"
+              v-if="child.icon"
+              class="w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500"
+            />
+            <span
+              class="text-sm font-medium whitespace-nowrap transition-all duration-200 overflow-hidden text-slate-400 dark:text-slate-500"
+              :class="[isChildCollapsed ? 'w-0 opacity-0 hidden' : 'w-auto opacity-100 truncate']"
+            >
+              {{ child.label }}
+            </span>
+            <!-- Tooltip quando colapsado -->
+            <div
+              v-if="isChildCollapsed"
+              class="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-lg"
+            >
+              {{ child.label }}
+            </div>
+          </div>
+
+          <!-- Item com rota (ativo) -->
+          <NuxtLink
+            v-else-if="typeof child === 'object' && child.path"
             :to="child.path"
             class="flex items-center rounded-lg transition-colors group relative"
             :class="[
@@ -179,9 +207,9 @@
                 : 'text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-white dark:hover:bg-slate-700'
             ]"
           >
-            <component 
-              :is="child.icon" 
-              v-if="child.icon" 
+            <component
+              :is="child.icon"
+              v-if="child.icon"
               class="w-4 h-4 shrink-0 transition-colors"
               :class="[
                 route.path === child.path
@@ -189,7 +217,7 @@
                   : 'text-slate-400 dark:text-slate-500 group-hover:text-primary-500'
               ]"
             />
-            <span 
+            <span
               class="text-sm font-medium whitespace-nowrap transition-all duration-200 overflow-hidden"
               :class="[isChildCollapsed ? 'w-0 opacity-0 hidden' : 'w-auto opacity-100 truncate']"
             >
@@ -197,7 +225,7 @@
             </span>
 
             <!-- Tooltip quando colapsado -->
-            <div 
+            <div
               v-if="isChildCollapsed"
               class="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-lg"
             >
@@ -283,10 +311,10 @@ const menuItems = [
     icon: Recycle, 
     children: [
       { label: 'Entradas', path: '/transacao_entradas', icon: ArrowRight },
-      { label: 'Transições Internas', path: '/residuos/transicoes', icon: ArrowRightLeft }, 
-      { label: 'Saídas', path: '/residuos/saidas', icon: ArrowLeft }, 
-      { label: 'Tipos de Resíduos', path: '/residuos/tipos', icon: Layers }, 
-      { label: 'Documentos', path: '/residuos/documentos', icon: FileSymlink }
+      { label: 'Transições Internas', path: '/residuos/transicoes', icon: ArrowRightLeft, disabled: true },
+      { label: 'Saídas', path: '/residuos/saidas', icon: ArrowLeft, disabled: true },
+      { label: 'Tipos de Resíduos', path: '/residuos/tipos', icon: Layers, disabled: true },
+      { label: 'Documentos', path: '/residuos/documentos', icon: FileSymlink, disabled: true }
     ] 
   },
   { 
@@ -302,13 +330,14 @@ const menuItems = [
       { label: 'Movimentações', path: '/movimentacoes_estoque', icon: Replace }
     ] 
   },
-  { 
-    label: 'Relatórios', 
-    icon: FileText, 
+  {
+    label: 'Relatórios',
+    icon: FileText,
+    disabled: true,
     children: [
-      { label: 'Movimentações', path: '/relatorios/movimentacoes', icon: ClipboardList }, 
+      { label: 'Movimentações', path: '/relatorios/movimentacoes', icon: ClipboardList },
       { label: 'ORD', path: '/relatorios/ord', icon: FileSpreadsheet }
-    ] 
+    ]
   }
 ];
 

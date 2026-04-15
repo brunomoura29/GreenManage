@@ -15,10 +15,16 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { FileText, Scale, AlertTriangle, Target } from 'lucide-vue-next'
+import { FileText, Scale, AlertTriangle, FlaskConical } from 'lucide-vue-next'
 
 const { calcularKpiManifestos, calcularKpiVolume } = useTransacoesListaDetalhe()
 const { datasAtual, datasAnterior, refreshKey, aplicarKey, clienteId, tipoResiduoId, transportadoraId } = useDashboardFiltros()
+const { calcularCustoQuimicos } = useEstoqueQuimicos()
+
+const custoQuimicos = computed(() => {
+  const { inicio, fim } = datasAtual.value
+  return calcularCustoQuimicos(inicio, fim)
+})
 
 const manifestosKpi = ref<{ atual: number; variacao: string; trendUp: boolean } | null>(null)
 const volumeKpi = ref<{ atual: number; variacao: string; trendUp: boolean } | null>(null)
@@ -58,6 +64,11 @@ const kpis = computed(() => [
     variant: 'secondary',
   },
   { label: 'Pendências SINIR', value: '3', icon: AlertTriangle, trend: '-2', trendUp: false, variant: 'danger' },
-  { label: 'Acuracidade', value: '99.8%', icon: Target, trend: '0.5%', trendUp: true, variant: 'primary' },
+  {
+    label: 'Custo Químicos (mês)',
+    value: custoQuimicos.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+    icon: FlaskConical,
+    variant: 'warning',
+  },
 ])
 </script>

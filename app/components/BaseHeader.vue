@@ -14,7 +14,7 @@
           <Bell class="w-5 h-5" />
           <span class="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full border border-slate-50 dark:border-slate-900"></span>
         </button>
-        <BaseButton icon="Plus" size="sm" variant="primary" class="shadow-lg shadow-primary-500/20">Novo Manifesto</BaseButton>
+        <BaseButton icon="Plus" size="sm" variant="primary" class="shadow-lg shadow-primary-500/20" @click="handleNovoManifesto">Novo Manifesto</BaseButton>
       </div>
     </div>
   </div>
@@ -23,6 +23,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { Sun, Moon, Bell } from 'lucide-vue-next';
+
+const { abrirModal } = useModalNovaEntrada()
+const router = useRouter()
+
+async function handleNovoManifesto() {
+  await router.push('/transacao_entradas')
+  abrirModal()
+}
 
 // Dark Mode Logic
 const isDark = ref(false);

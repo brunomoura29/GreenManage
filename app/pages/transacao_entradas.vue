@@ -133,6 +133,15 @@ const {
   deleteTransacao,
 } = useTransacoesListaEntrada()
 
+const { abrir: abrirModalGlobal, fecharModal: fecharModalGlobal } = useModalNovaEntrada()
+
+watch(abrirModalGlobal, (val) => {
+  if (val) {
+    exibindoModalCriar.value = true
+    fecharModalGlobal()
+  }
+})
+
 const search = ref('')
 const paginaAtual = ref(1)
 const itensPorPagina = ref(10)
