@@ -371,6 +371,7 @@
             :indicador-unique-id="ind.uniqueId"
             :operadores="operadores"
             :medicao-id="!isNovo ? (medicao?.medicao_unique_id ?? null) : null"
+            :periodo-base="form.periodoInicio"
             @remover="removerIndicador(ind.uniqueId)"
           />
         </div>
@@ -417,6 +418,8 @@ import type { ViewMedicoesCompleta } from '~/types/viewMedicoesCompleta'
 const props = defineProps<{
   isNovo: boolean
   medicao?: ViewMedicoesCompleta | null
+  periodoInicioDefault?: string
+  periodoFimDefault?: string
 }>()
 
 const emit = defineEmits<{ salvo: []; voltar: [] }>()

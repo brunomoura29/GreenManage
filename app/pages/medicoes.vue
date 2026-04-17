@@ -25,7 +25,7 @@
 
           <!-- Botão nova medição -->
           <button
-            @click="view = 'cadastrar'"
+            @click="abrirNovaMedicao"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-600 active:scale-95 transition-all shadow-soft shrink-0"
           >
             <Plus class="w-4 h-4" />
@@ -68,6 +68,8 @@
         <CadastroMedicoes
           :is-novo="!medicaoEditando"
           :medicao="medicaoEditando"
+          :periodo-inicio-default="periodoInicioDefault"
+          :periodo-fim-default="periodoFimDefault"
           @salvo="onSalvo"
           @voltar="voltarParaLista"
         />
@@ -93,6 +95,7 @@ import { ref, watch, onMounted } from 'vue'
 import { Plus, Search, ArrowLeft } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { ViewMedicoesCompleta } from '~/types/viewMedicoesCompleta'
+import { calcularProximaDataMedicao } from '~/composables/useCadastroMedicoes'
 
 const {
   medicoes,
@@ -108,13 +111,15 @@ const itensPorPagina = ref(10)
 
 const view = ref<'lista' | 'cadastrar'>('lista')
 const medicaoEditando = ref<ViewMedicoesCompleta | null>(null)
+const periodoInicioDefault = ref('')
+const periodoFimDefault = ref('')
 
 // Estados para Exclusão
 const exibindoModalExcluir = ref(false)
 const medicaoParaExcluir = ref<ViewMedicoesCompleta | null>(null)
 const excluindo = ref(false)
 
-const { deleteMedicao } = useMedicoes()
+const { deleteMedicao, fetchUltimaMedicaoData } = useMedicoes()
 const { deleteRegistrosByMedicao: deleteIndicadoresByMedicao } = useRegistroIndicadores()
 const { deleteRegistrosByMedicao: deleteValoresByMedicao } = useRegistroValorMedicao()
 const { deleteLagoasByMedicao } = useLagoasBaixadas()
@@ -151,7 +156,23 @@ const medicoesFiltradosCompleto = computed(() => {
 // Resetar página ao mudar filtros
 watch(filtros, () => { paginaAtual.value = 1 }, { deep: true })
 
+async function abrirNovaMedicao() {
+  medicaoEditando.value = null
+  const ultimaData = await fetchUltimaMedicaoData()
+  if (ultimaData) {
+    const { inicio, fim } = calcularProximaDataMedicao(ultimaData)
+    periodoInicioDefault.value = inicio
+    periodoFimDefault.value = fim
+  } else {
+    periodoInicioDefault.value = ''
+    periodoFimDefault.value = ''
+  }
+  view.value = 'cadastrar'
+}
+
 function handleEdit(medicao: ViewMedicoesCompleta) {
+  periodoInicioDefault.value = ''
+  periodoFimDefault.value = ''
   medicaoEditando.value = { ...medicao }
   view.value = 'cadastrar'
 }
@@ -166,19 +187,27 @@ async function confirmDelete() {
 
   excluindo.value = true
 
-  // 1. Deletar TODOS os registros filhos em paralelo (cascata manual)
+  // 1. Deletar registros filhos em ordem (valores → indicadores → lagoas)
   const uniqueId = medicaoParaExcluir.value.medicao_unique_id ?? ''
-  const [resIndicadores, resValores, resLagoas] = await Promise.all([
-    uniqueId ? deleteIndicadoresByMedicao(uniqueId) : Promise.resolve({ success: true }),
-    uniqueId ? deleteValoresByMedicao(uniqueId)    : Promise.resolve({ success: true }),
-    uniqueId ? deleteLagoasByMedicao(uniqueId)     : Promise.resolve({ success: true })
-  ])
 
-  if (!resIndicadores.success || !resValores.success || !resLagoas.success) {
+  const resValores = uniqueId ? await deleteValoresByMedicao(uniqueId) : { success: true }
+  if (!resValores.success) {
     excluindo.value = false
-    toast.error('Erro ao excluir registros vinculados', {
-      description: (resIndicadores as any).error || (resValores as any).error || (resLagoas as any).error || 'Ocorreu um problema ao tentar excluir os registros vinculados.'
-    })
+    toast.error('Erro ao excluir registros vinculados', { description: (resValores as any).error })
+    return
+  }
+
+  const resIndicadores = uniqueId ? await deleteIndicadoresByMedicao(uniqueId) : { success: true }
+  if (!resIndicadores.success) {
+    excluindo.value = false
+    toast.error('Erro ao excluir registros vinculados', { description: (resIndicadores as any).error })
+    return
+  }
+
+  const resLagoas = uniqueId ? await deleteLagoasByMedicao(uniqueId) : { success: true }
+  if (!resLagoas.success) {
+    excluindo.value = false
+    toast.error('Erro ao excluir registros vinculados', { description: (resLagoas as any).error })
     return
   }
 
@@ -204,6 +233,8 @@ async function onSalvo() {
 
 function voltarParaLista() {
   medicaoEditando.value = null
+  periodoInicioDefault.value = ''
+  periodoFimDefault.value = ''
   view.value = 'lista'
 }
 </script>

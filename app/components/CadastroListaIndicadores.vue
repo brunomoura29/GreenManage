@@ -205,6 +205,7 @@ const props = defineProps<{
   indicadorUniqueId: string
   operadores: Operador[]
   medicaoId?: string | null
+  periodoBase?: string | null
 }>()
 
 defineEmits<{ remover: [] }>()
@@ -227,10 +228,21 @@ function dataHoje(hora: string) {
   return formatData(new Date(), hora)
 }
 
-function dataAmanha(hora: string) {
-  const amanha = new Date()
-  amanha.setDate(amanha.getDate() + 1)
-  return formatData(amanha, hora)
+function dataBase(hora: string): string {
+  if (!props.periodoBase) return dataHoje(hora)
+  return `${props.periodoBase.substring(0, 10)}T${hora}`
+}
+
+function dataBaseProximoDia(hora: string): string {
+  if (!props.periodoBase) {
+    const amanha = new Date()
+    amanha.setDate(amanha.getDate() + 1)
+    return formatData(amanha, hora)
+  }
+  const [ano, mes, dia] = props.periodoBase.substring(0, 10).split('-').map(Number)
+  const d = new Date(ano, mes - 1, dia)
+  d.setDate(d.getDate() + 1)
+  return formatData(d, hora)
 }
 
 function adicionarTurno() {
@@ -239,8 +251,8 @@ function adicionarTurno() {
   const ehNoturno = turnos.value.length === 1
 
   turnos.value.push({
-    periodoInicio: ehNoturno ? dataHoje('18:00') : dataHoje('06:00'),
-    periodoFim:    ehNoturno ? dataAmanha('06:00') : dataHoje('18:00'),
+    periodoInicio: ehNoturno ? dataBase('18:00') : dataBase('06:00'),
+    periodoFim:    ehNoturno ? dataBaseProximoDia('06:00') : dataBase('18:00'),
     valor: null,
     operador: '',
     fotoFile: null,
