@@ -418,6 +418,8 @@ import type { ViewMedicoesCompleta } from '~/types/viewMedicoesCompleta'
 const props = defineProps<{
   isNovo: boolean
   medicao?: ViewMedicoesCompleta | null
+  periodoInicioDefault?: string
+  periodoFimDefault?: string
 }>()
 
 const emit = defineEmits<{ salvo: []; voltar: [] }>()

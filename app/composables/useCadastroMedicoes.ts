@@ -31,23 +31,22 @@ function dataHoje(hora: string) {
   return `${ano}-${mes}-${dia}T${hora}`
 }
 
-function formatarData(d: Date): string {
+export function formatarData(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-function calcularProximaDataMedicao(ultimaData: string): { inicio: string; fim: string } {
-  const [ano, mes, dia] = ultimaData.substring(0, 10).split('-').map(Number)
-  const base = new Date(ano, mes - 1, dia)
+export function calcularProximaDataMedicao(ultimaData: string): { inicio: string; fim: string } {
+  const parts = ultimaData.substring(0, 10).split('-')
+  const base = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
   base.setDate(base.getDate() + 1)
-  if (base.getDay() === 0) base.setDate(base.getDate() + 1) // domingo → segunda
   const fim = new Date(base)
   fim.setDate(fim.getDate() + 1)
   return { inicio: `${formatarData(base)}T06:00`, fim: `${formatarData(fim)}T18:00` }
 }
 
 export function useCadastroMedicoes(
-  props: { isNovo: boolean; medicao?: ViewMedicoesCompleta | null },
+  props: { isNovo: boolean; medicao?: ViewMedicoesCompleta | null; periodoInicioDefault?: string; periodoFimDefault?: string },
   emit: { (event: 'salvo'): void; (event: 'voltar'): void }
 ) {
   // ── Composables ────────────────────────────────────────────────────────────
@@ -63,8 +62,8 @@ export function useCadastroMedicoes(
 
   // ── Formulário ─────────────────────────────────────────────────────────────
   const form = ref({
-    periodoInicio: dataHoje('06:00'),
-    periodoFim: dataHoje('18:00'),
+    periodoInicio: props.periodoInicioDefault || dataHoje('06:00'),
+    periodoFim:    props.periodoFimDefault    || dataHoje('18:00'),
     tipoMedicao: '',
     observacao: '',
     dosagem_de_cloro: false,
@@ -220,7 +219,7 @@ export function useCadastroMedicoes(
     await Promise.all([fetchIndicadores(), fetchOperadores()])
     if (!props.isNovo) {
       populateForm()
-    } else {
+    } else if (!props.periodoInicioDefault) {
       const ultimaData = await fetchUltimaMedicaoData()
       if (ultimaData) {
         const { inicio, fim } = calcularProximaDataMedicao(ultimaData)
