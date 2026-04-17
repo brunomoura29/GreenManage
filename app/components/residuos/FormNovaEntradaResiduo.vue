@@ -263,22 +263,6 @@
           </div>
         </section>
 
-        <!-- Gerador (auto-preenchido via SINIR) -->
-        <section v-if="geradorSelecionado">
-          <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-            Gerador
-          </h2>
-          <div class="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-            <Building2 class="w-4 h-4 text-slate-400 shrink-0" />
-            <div>
-              <p class="text-sm font-medium text-slate-900 dark:text-white">{{ geradorSelecionado.nome_fantasia }}</p>
-              <p class="text-xs text-slate-500 dark:text-slate-400">
-                SINIR: {{ geradorSelecionado.codigo_sinir ?? '—' }}
-                <template v-if="geradorSelecionado.document"> · CNPJ: {{ geradorSelecionado.document }}</template>
-              </p>
-            </div>
-          </div>
-        </section>
 
       </div>
 
@@ -426,7 +410,7 @@
       </div>
 
       <!-- ══ ABA 3: Resíduo ════════════════════════════════════════════════════ -->
-      <div v-show="abaAtiva === 2" class="space-y-6">
+      <div v-show="abaAtiva === 3" class="space-y-6">
 
         <section>
           <div class="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 mb-4">
@@ -633,8 +617,97 @@
 
       </div>
 
-      <!-- ══ ABA 4: Informações adicionais ══════════════════════════════════════ -->
-      <div v-show="abaAtiva === 3" class="space-y-6">
+      <!-- ══ ABA 3: Gerador ══════════════════════════════════════════════════════ -->
+      <div v-show="abaAtiva === 2" class="space-y-6">
+
+        <section>
+          <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+            Informações do Gerador
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- Nome Fantasia – pesquisa -->
+            <div class="flex flex-col gap-1.5 sm:col-span-2">
+              <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Nome (Nome Fantasia / Razão Social)
+              </label>
+              <div class="relative" ref="refGerador">
+                <div class="relative">
+                  <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input
+                    v-model="geradorBusca"
+                    type="text"
+                    placeholder="Buscar gerador..."
+                    @focus="geradorAberto = true"
+                    @input="filtrarGeradores"
+                    class="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+                  />
+                  <button
+                    v-if="geradorSelecionado"
+                    type="button"
+                    @click="limparGerador"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <X class="w-4 h-4" />
+                  </button>
+                </div>
+                <div
+                  v-if="geradorAberto && geradorFiltrados.length > 0"
+                  class="absolute z-20 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg overflow-hidden"
+                >
+                  <button
+                    v-for="c in geradorFiltrados"
+                    :key="c.id"
+                    type="button"
+                    @click="selecionarGerador(c)"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <Factory class="w-4 h-4 text-slate-400 shrink-0" />
+                    <div>
+                      <p class="font-medium text-slate-900 dark:text-white">{{ c.nome_fantasia }}</p>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">{{ c.razao_social }} · CNPJ: {{ c.document ?? '—' }}</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- CNPJ – somente leitura após seleção -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                CNPJ
+              </label>
+              <input
+                :value="geradorSelecionado?.document ?? ''"
+                type="text"
+                placeholder="Preenchido automaticamente"
+                readonly
+                class="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 placeholder-slate-400 dark:placeholder-slate-500 cursor-not-allowed"
+              />
+            </div>
+
+            <!-- Código SINIR – somente leitura após seleção -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Código no SINIR
+              </label>
+              <input
+                :value="geradorSelecionado?.codigo_sinir ?? ''"
+                type="text"
+                placeholder="Preenchido automaticamente"
+                readonly
+                class="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 placeholder-slate-400 dark:placeholder-slate-500 cursor-not-allowed"
+              />
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ══ ABA 5: Informações adicionais ══════════════════════════════════════ -->
+      <div v-show="abaAtiva === 4" class="space-y-6">
+
 
         <section>
           <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
@@ -855,7 +928,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import {
   ArrowLeft, Loader2, Search, X, Plus, Trash2, Info,
   FileText, Car, Truck, User, Building2, Package, FlaskConical,
-  ChevronLeft, ChevronRight, SlidersHorizontal, MapPin, UserCheck,
+  ChevronLeft, ChevronRight, SlidersHorizontal, MapPin, UserCheck, Factory,
 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { TransacaoListaDetalhe } from '~/types/transacaoListaDetalhe'
@@ -913,6 +986,7 @@ const abaAtiva = ref(0)
 const abas = computed(() => [
   { label: 'Documento', icone: FileText, erro: false },
   { label: 'Transportadora', icone: Building2, erro: false },
+  { label: 'Gerador', icone: Factory, erro: false },
   { label: 'Resíduo', icone: Package, erro: false },
   { label: 'Inf. adicionais', icone: SlidersHorizontal, erro: false },
 ])
@@ -1054,6 +1128,34 @@ function limparTransportadora() {
   transportadoraSelecionada.value = null
 }
 
+// ── Estado de pesquisa — Gerador ─────────────────────────────────────────────
+
+const geradorBusca = ref('')
+const geradorAberto = ref(false)
+const geradorFiltrados = ref<Cliente[]>([])
+
+function filtrarGeradores() {
+  const q = geradorBusca.value.toLowerCase()
+  geradorFiltrados.value = q.length < 1
+    ? clientes.value.slice(0, 8)
+    : clientes.value.filter(c =>
+        c.nome_fantasia?.toLowerCase().includes(q) ||
+        c.razao_social?.toLowerCase().includes(q) ||
+        c.document?.includes(q)
+      ).slice(0, 8)
+}
+
+function selecionarGerador(c: Cliente) {
+  geradorSelecionado.value = c
+  geradorBusca.value = c.nome_fantasia ?? ''
+  geradorAberto.value = false
+}
+
+function limparGerador() {
+  geradorSelecionado.value = null
+  geradorBusca.value = ''
+}
+
 // ── MTR(s) da transportadora ──────────────────────────────────────────────────
 
 function adicionarMtrTransportadora() {
@@ -1184,6 +1286,7 @@ const refCodigoInterno = ref<HTMLElement | null>(null)
 const refTipoResiduo = ref<HTMLElement | null>(null)
 const refLocal = ref<HTMLElement | null>(null)
 const refOperador = ref<HTMLElement | null>(null)
+const refGerador = ref<HTMLElement | null>(null)
 
 function fecharDropdowns(e: MouseEvent) {
   const target = e.target as Node
@@ -1195,6 +1298,7 @@ function fecharDropdowns(e: MouseEvent) {
   if (!refTipoResiduo.value?.contains(target)) tipoResiduoAberto.value = false
   if (!refLocal.value?.contains(target)) localAberto.value = false
   if (!refOperador.value?.contains(target)) operadorAberto.value = false
+  if (!refGerador.value?.contains(target)) geradorAberto.value = false
 }
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
@@ -1462,7 +1566,14 @@ function popularFormDoDetalhe(d: TransacaoListaDetalhe, doc: import('~/types/tra
     if (tipo) selecionarTipoResiduo(tipo)
   }
 
-  // ── Aba 4 – Informações adicionais ──────────────────────────────────────
+  // ── Aba 4 – Gerador ──────────────────────────────────────────────────────
+  const generatorId = doc?.generator ?? null
+  if (generatorId) {
+    const c = clientes.value.find(c => c.unique_id === generatorId)
+    if (c) selecionarGerador(c)
+  }
+
+  // ── Aba 5 – Informações adicionais ──────────────────────────────────────
   form.value.ph = d.ph ?? null
   form.value.temperature = d.temperature ?? null
   form.value.conductivity = d.conductivity ?? null
