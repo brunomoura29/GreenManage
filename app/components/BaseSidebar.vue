@@ -260,26 +260,34 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
-  LayoutDashboard, 
-  FolderPlus, 
-  Ruler, 
-  Recycle, 
-  CloudSun, 
-  Package, 
+import {
+  LayoutDashboard,
+  FolderPlus,
+  Ruler,
+  Recycle,
+  CloudSun,
+  Package,
   FileText,
-  Users, Truck, Briefcase, MapPin, Wrench, Activity, TrendingUp, 
-  ArrowRight, ArrowRightLeft, ArrowLeft, Layers, FileSymlink, 
+  Users, Truck, Briefcase, MapPin, Wrench, Activity, TrendingUp,
+  ArrowRight, ArrowRightLeft, ArrowLeft, Layers, FileSymlink,
   Container, Replace, ClipboardList, FileSpreadsheet,
   MoreHorizontal, LogOut, User
 } from 'lucide-vue-next';
 import { useAuth } from '~/composables/useAuth';
 
+interface MenuItem {
+  label: string;
+  icon: any;
+  path?: string;
+  disabled?: boolean;
+  children?: MenuItem[];
+}
+
 const route = useRoute();
 const router = useRouter();
 
 // Definição dos itens
-const menuItems = [
+const menuItems: MenuItem[] = [
   { 
     label: 'Dashboard', 
     icon: LayoutDashboard, 
@@ -333,10 +341,10 @@ const menuItems = [
   {
     label: 'Relatórios',
     icon: FileText,
-    disabled: true,
     children: [
-      { label: 'Movimentações', path: '/relatorios/movimentacoes', icon: ClipboardList },
-      { label: 'ORD', path: '/relatorios/ord', icon: FileSpreadsheet }
+      { label: 'Entradas', path: '/relatorios/entradas', icon: ClipboardList },
+      { label: 'Movimentações', path: '/relatorios/movimentacoes', icon: ClipboardList, disabled: true },
+      { label: 'ORD', path: '/relatorios/ord', icon: FileSpreadsheet, disabled: true }
     ]
   }
 ];
@@ -376,7 +384,7 @@ watch(() => route.path, (newPath) => {
   });
   if (matched) {
     activeParent.value = matched.label;
-    if (matched.children.length > 0) {
+    if (matched.children && matched.children.length > 0) {
       isParentCollapsed.value = true;
       isChildCollapsed.value = true; // já na página = filho colapsado
     } else {
@@ -400,7 +408,7 @@ const activeParentIcon = computed(() => {
 // O sidebar filho é exibido se o pai está colapsado e a seção ativa tem filhos
 const showChildrenSidebar = computed(() => {
   const activeItem = menuItems.find(item => item.label === activeParent.value);
-  return isParentCollapsed.value && activeItem && activeItem.children.length > 0;
+  return isParentCollapsed.value && activeItem && (activeItem.children?.length ?? 0) > 0;
 });
 
 function handleParentClick(item: any) {
