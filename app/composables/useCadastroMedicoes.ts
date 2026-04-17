@@ -31,6 +31,21 @@ function dataHoje(hora: string) {
   return `${ano}-${mes}-${dia}T${hora}`
 }
 
+function formatarData(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function calcularProximaDataMedicao(ultimaData: string): { inicio: string; fim: string } {
+  const [ano, mes, dia] = ultimaData.substring(0, 10).split('-').map(Number)
+  const base = new Date(ano, mes - 1, dia)
+  base.setDate(base.getDate() + 1)
+  if (base.getDay() === 0) base.setDate(base.getDate() + 1) // domingo → segunda
+  const fim = new Date(base)
+  fim.setDate(fim.getDate() + 1)
+  return { inicio: `${formatarData(base)}T06:00`, fim: `${formatarData(fim)}T18:00` }
+}
+
 export function useCadastroMedicoes(
   props: { isNovo: boolean; medicao?: ViewMedicoesCompleta | null },
   emit: { (event: 'salvo'): void; (event: 'voltar'): void }
@@ -38,7 +53,7 @@ export function useCadastroMedicoes(
   // ── Composables ────────────────────────────────────────────────────────────
   const { indicadores, fetchIndicadores } = useIndicadores()
   const { operadores, fetchOperadores } = useOperadores()
-  const { createMedicao, updateMedicao } = useMedicoes()
+  const { createMedicao, updateMedicao, fetchUltimaMedicaoData } = useMedicoes()
   const { createRegistroIndicador, deleteRegistrosByMedicao: deleteIndicsByMedicao } = useRegistroIndicadores()
   const { createRegistroValor, deleteRegistrosByMedicao: deleteValoresByMedicao } = useRegistroValorMedicao()
   const { createLagoaBaixada, deleteLagoasByMedicao } = useLagoasBaixadas()
@@ -203,7 +218,16 @@ export function useCadastroMedicoes(
 
   onMounted(async () => {
     await Promise.all([fetchIndicadores(), fetchOperadores()])
-    if (!props.isNovo) populateForm()
+    if (!props.isNovo) {
+      populateForm()
+    } else {
+      const ultimaData = await fetchUltimaMedicaoData()
+      if (ultimaData) {
+        const { inicio, fim } = calcularProximaDataMedicao(ultimaData)
+        form.value.periodoInicio = inicio
+        form.value.periodoFim    = fim
+      }
+    }
   })
 
   // ── Salvar (orquestração completa) ─────────────────────────────────────────

@@ -371,6 +371,7 @@
             :indicador-unique-id="ind.uniqueId"
             :operadores="operadores"
             :medicao-id="!isNovo ? (medicao?.medicao_unique_id ?? null) : null"
+            :periodo-base="form.periodoInicio"
             @remover="removerIndicador(ind.uniqueId)"
           />
         </div>

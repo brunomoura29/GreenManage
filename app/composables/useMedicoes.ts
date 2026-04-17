@@ -102,6 +102,19 @@ export function useMedicoes() {
         return { success: true }
     }
 
+    // ── Fetch última data de medição ───────────────────────────────────────
+    async function fetchUltimaMedicaoData(): Promise<string | null> {
+        const { data, error: err } = await supabase
+            .from('medicoes')
+            .select('date')
+            .order('date', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        if (err || !data) return null
+        return (data as any).date ?? null
+    }
+
     // ── Filtro local ────────────────────────────────────────────────────────
     const medicoesFiltradas = computed(() => {
         const q = search.value.toLowerCase().trim()
@@ -122,6 +135,7 @@ export function useMedicoes() {
         search,
         fetchMedicoes,
         fetchMedicaoByUniqueId,
+        fetchUltimaMedicaoData,
         createMedicao,
         updateMedicao,
         deleteMedicao
