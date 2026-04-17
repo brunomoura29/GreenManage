@@ -34,9 +34,9 @@
           </button>
         </div>
 
-        <!-- Barra de pesquisa -->
-        <div class="px-6 md:px-8 pb-4">
-          <div class="relative max-w-sm">
+        <!-- Barra de pesquisa + filtros de data -->
+        <div v-if="!entradaAtiva" class="px-6 md:px-8 pb-4 flex flex-wrap items-end gap-3">
+          <div class="relative max-w-sm flex-1 min-w-[180px]">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
               v-model="search"
@@ -45,6 +45,31 @@
               class="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
             />
           </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-slate-500 dark:text-slate-400">De</label>
+            <input
+              v-model="filtroDataInicio"
+              type="date"
+              class="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Até</label>
+            <input
+              v-model="filtroDataFim"
+              type="date"
+              class="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+            />
+          </div>
+          <button
+            v-if="temFiltroAtivo"
+            @click="limparFiltros"
+            class="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+          >
+            <X class="w-3.5 h-3.5" />
+            Limpar
+          </button>
         </div>
 
         <!-- Tabela -->
@@ -122,7 +147,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { Plus, Search } from 'lucide-vue-next'
+import { Plus, Search, X } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { TransacaoListaEntrada } from '~/types/transacaoListaEntrada'
 import type { TransacaoListaDetalhe } from '~/types/transacaoListaDetalhe'
@@ -142,6 +167,8 @@ watch(abrirModalGlobal, (val) => {
     fecharModalGlobal()
   }
 })
+
+const { filtroDataInicio, filtroDataFim, temFiltroAtivo, limparFiltros } = useTransacoesEntradasFiltros()
 
 const search = ref('')
 const paginaAtual = ref(1)

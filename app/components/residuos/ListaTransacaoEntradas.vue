@@ -34,7 +34,7 @@
               </tr>
 
               <!-- Empty state -->
-              <tr v-else-if="transacoes.length === 0">
+              <tr v-else-if="transacoesFiltradas.length === 0">
                 <td colspan="3" class="px-4 py-10 text-center">
                   <div class="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                     <ArrowDownToLine class="w-8 h-8" />
@@ -106,7 +106,7 @@
               </div>
             </div>
           </div>
-          <div v-else-if="transacoes.length === 0"
+          <div v-else-if="transacoesFiltradas.length === 0"
             class="rounded-xl border border-slate-200 dark:border-slate-700 p-8 bg-white dark:bg-slate-900 flex flex-col items-center gap-2 text-slate-400">
             <ArrowDownToLine class="w-8 h-8" />
             <span class="text-sm">Nenhuma transação de entrada encontrada</span>
@@ -144,10 +144,10 @@
         </div>
 
         <!-- Paginação -->
-        <div v-if="!loading && transacoes.length > 0" class="mt-2 text-right">
+        <div v-if="!loading && transacoesFiltradas.length > 0" class="mt-2 text-right">
           <BasePagination
             :current-page="currentPage"
-            :total-items="transacoes.length"
+            :total-items="transacoesFiltradas.length"
             :items-per-page="itemsPerPage"
             label="transações"
             @change-page="$emit('update:currentPage', $event)"
@@ -247,8 +247,10 @@ const emit = defineEmits<{
 
 const { detalhes, loading: loadingDetalhes, fetchDetalhesByEntrada, deleteDetalhe } = useTransacoesListaDetalhe()
 const { filtrarDetalhes } = useTransacoesDetalhesFiltros()
+const { filtrarEntradas } = useTransacoesEntradasFiltros()
 
 const detalhesFiltrados = computed(() => filtrarDetalhes(detalhes.value))
+const transacoesFiltradas = computed(() => filtrarEntradas(props.transacoes))
 
 const entradaSelecionada = ref<TransacaoListaEntrada | null>(null)
 const paginaDetalhes = ref(1)
@@ -266,7 +268,7 @@ watch(() => props.reabrirEntrada, (entrada) => {
 const paginatedTransacoes = computed(() => {
   const start = (props.currentPage - 1) * props.itemsPerPage
   const end = start + props.itemsPerPage
-  return props.transacoes.slice(start, end)
+  return transacoesFiltradas.value.slice(start, end)
 })
 
 async function abrirDetalhes(item: TransacaoListaEntrada) {
