@@ -20,6 +20,7 @@ import { FileText, Scale, AlertTriangle, FlaskConical } from 'lucide-vue-next'
 const { calcularKpiManifestos, calcularKpiVolume } = useTransacoesListaDetalhe()
 const { datasAtual, datasAnterior, refreshKey, aplicarKey, clienteId, tipoResiduoId, transportadoraId } = useDashboardFiltros()
 const { calcularCustoQuimicos } = useEstoqueQuimicos()
+const { contarPendenciasSinir } = useRelatorioEntradasResiduos()
 
 const custoQuimicos = computed(() => {
   const { inicio, fim } = datasAtual.value
@@ -28,19 +29,22 @@ const custoQuimicos = computed(() => {
 
 const manifestosKpi = ref<{ atual: number; variacao: string; trendUp: boolean } | null>(null)
 const volumeKpi = ref<{ atual: number; variacao: string; trendUp: boolean } | null>(null)
+const pendenciasSinir = ref<number | null>(null)
 
 async function carregar() {
   const { inicio, fim } = datasAtual.value
   const { inicio: inicioAnt, fim: fimAnt } = datasAnterior.value
   const filtros = { clienteId: clienteId.value, tipoResiduoId: tipoResiduoId.value, transportadoraId: transportadoraId.value }
 
-  const [manifestos, volume] = await Promise.all([
+  const [manifestos, volume, sinir] = await Promise.all([
     calcularKpiManifestos(inicio, fim, inicioAnt, fimAnt, filtros),
     calcularKpiVolume(inicio, fim, inicioAnt, fimAnt, filtros),
+    contarPendenciasSinir(inicio, fim, { clienteId: clienteId.value, transportadoraId: transportadoraId.value }),
   ])
 
   manifestosKpi.value = { atual: manifestos.atual, variacao: manifestos.variacao, trendUp: manifestos.trendUp }
   volumeKpi.value = { atual: volume.atual, variacao: volume.variacao, trendUp: volume.trendUp }
+  pendenciasSinir.value = sinir
 }
 
 onMounted(carregar)
@@ -63,7 +67,7 @@ const kpis = computed(() => [
     trendUp: volumeKpi.value?.trendUp ?? true,
     variant: 'secondary',
   },
-  { label: 'Pendências SINIR', value: '3', icon: AlertTriangle, trend: '-2', trendUp: false, variant: 'danger' },
+  { label: 'Pendências SINIR', value: pendenciasSinir.value === null ? '...' : String(pendenciasSinir.value), icon: AlertTriangle, variant: 'danger' },
   {
     label: 'Custo Químicos (mês)',
     value: custoQuimicos.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),

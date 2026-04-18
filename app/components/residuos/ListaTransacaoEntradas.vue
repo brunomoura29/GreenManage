@@ -61,7 +61,7 @@
                 <td class="px-4 py-3">
                   <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
                     <ClipboardList class="w-3 h-3" />
-                    {{ item.qtd_registros ?? 0 }}
+                    {{ sinirAtivo && item.unique_id ? (contagemPendencias.get(item.unique_id) ?? 0) : (item.qtd_registros ?? 0) }}
                   </span>
                 </td>
                 <td class="px-4 py-3">
@@ -124,7 +124,7 @@
                 <div class="min-w-0">
                   <p class="font-semibold text-slate-900 dark:text-white truncate">{{ formatData(item.date) }}</p>
                   <div class="flex items-center gap-2 mt-0.5">
-                    <p class="text-xs font-semibold text-primary-600 dark:text-primary-400">{{ item.qtd_registros ?? 0 }} registro(s)</p>
+                    <p class="text-xs font-semibold text-primary-600 dark:text-primary-400">{{ sinirAtivo && item.unique_id ? (contagemPendencias.get(item.unique_id) ?? 0) : (item.qtd_registros ?? 0) }} registro(s)</p>
                     <span v-if="parseFloat(String(item.total_recebido ?? 0)) > 0" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                       · {{ formatVolume(item.total_recebido) }} m³
                     </span>
@@ -248,9 +248,14 @@ const emit = defineEmits<{
 const { detalhes, loading: loadingDetalhes, fetchDetalhesByEntrada, deleteDetalhe } = useTransacoesListaDetalhe()
 const { filtrarDetalhes } = useTransacoesDetalhesFiltros()
 const { filtrarEntradas } = useTransacoesEntradasFiltros()
+const { ativo: sinirAtivo, contagemPendencias, filtrarEntradas: filtrarEntradasSinir } = useFiltroPendenciaSinir()
 
-const detalhesFiltrados = computed(() => filtrarDetalhes(detalhes.value))
-const transacoesFiltradas = computed(() => filtrarEntradas(props.transacoes))
+const detalhesFiltrados = computed(() => {
+  const base = filtrarDetalhes(detalhes.value)
+  if (!sinirAtivo.value) return base
+  return base.filter(d => !d.mtr)
+})
+const transacoesFiltradas = computed(() => filtrarEntradasSinir(filtrarEntradas(props.transacoes)))
 
 const entradaSelecionada = ref<TransacaoListaEntrada | null>(null)
 const paginaDetalhes = ref(1)

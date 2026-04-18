@@ -27,6 +27,7 @@ export interface TransacaoListaDetalhe {
     // Campos vindos da view (transacoes_documento)
     nota_fiscal?: string | null
     mtr?: string | null
+    manifest_number?: string | null
     mtrs_transportadora?: any | null
     cliente_id?: string | null
     // Nomes resolvidos via JOIN
@@ -36,7 +37,7 @@ export interface TransacaoListaDetalhe {
 }
 
 // Campos somente de view/JOIN — nunca devem ser enviados no insert/update
-type ViewOnlyFields = 'nota_fiscal' | 'mtr' | 'mtrs_transportadora' | 'cliente_id' | 'nome_transportadora' | 'nome_residue_type' | 'nome_cliente'
+type ViewOnlyFields = 'nota_fiscal' | 'mtr' | 'manifest_number' | 'mtrs_transportadora' | 'cliente_id' | 'nome_transportadora' | 'nome_residue_type' | 'nome_cliente'
 
 export type TransacaoListaDetalheInsert = Omit<TransacaoListaDetalhe, 'id' | 'creation_date' | 'modified_date' | ViewOnlyFields>
 export type TransacaoListaDetalheUpdate = Partial<Omit<TransacaoListaDetalheInsert, 'unique_id'>>
