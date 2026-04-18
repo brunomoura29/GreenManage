@@ -70,6 +70,20 @@
             <X class="w-3.5 h-3.5" />
             Limpar
           </button>
+
+          <button
+            @click="handleTogglePendencias"
+            :disabled="carregandoFiltroSinir"
+            class="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition"
+            :class="filtroPendenciaAtivo
+              ? 'border-red-400 bg-red-50 text-red-600 dark:border-red-500 dark:bg-red-900/20 dark:text-red-400'
+              : temFiltroAtivo
+                ? 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                : 'border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600 cursor-not-allowed'"
+          >
+            <AlertTriangle class="w-3.5 h-3.5" :class="carregandoFiltroSinir ? 'animate-pulse' : ''" />
+            Pendências SINIR
+          </button>
         </div>
 
         <!-- Tabela -->
@@ -147,7 +161,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { Plus, Search, X } from 'lucide-vue-next'
+import { Plus, Search, X, AlertTriangle } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { TransacaoListaEntrada } from '~/types/transacaoListaEntrada'
 import type { TransacaoListaDetalhe } from '~/types/transacaoListaDetalhe'
@@ -169,6 +183,19 @@ watch(abrirModalGlobal, (val) => {
 })
 
 const { filtroDataInicio, filtroDataFim, temFiltroAtivo, limparFiltros } = useTransacoesEntradasFiltros()
+const { ativo: filtroPendenciaAtivo, carregando: carregandoFiltroSinir, toggle: toggleFiltroPendencia, carregar: recarregarPendencias } = useFiltroPendenciaSinir()
+
+watch([filtroDataInicio, filtroDataFim], () => {
+  if (filtroPendenciaAtivo.value) recarregarPendencias()
+})
+
+function handleTogglePendencias() {
+  if (!temFiltroAtivo.value) {
+    toast.warning('Selecione um período de datas antes de filtrar por Pendências SINIR.')
+    return
+  }
+  toggleFiltroPendencia()
+}
 
 const search = ref('')
 const paginaAtual = ref(1)

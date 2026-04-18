@@ -87,6 +87,28 @@ export const useRelatorioEntradasResiduos = () => {
     await fetchPagina(p)
   }
 
+  // ── Pendências SINIR ──────────────────────────────────────────────────────
+
+  async function contarPendenciasSinir(
+    inicio: string,
+    fim: string,
+    filtros?: { clienteId?: string | null; transportadoraId?: string | null },
+  ): Promise<number> {
+    let q = supabase
+      .from(VIEW)
+      .select('id', { count: 'exact', head: true })
+      .is('mtr_sinir', null)
+      .gte('data_recebida', inicio)
+      .lte('data_recebida', fim + 'T23:59:59')
+
+    if (filtros?.clienteId) q = q.ilike('cliente', `%${filtros.clienteId}%`)
+    if (filtros?.transportadoraId) q = q.ilike('transportadora', `%${filtros.transportadoraId}%`)
+
+    const { count, error: err } = await q
+    if (err) throw new Error(err.message)
+    return count ?? 0
+  }
+
   // ── Exportação (todos os registros filtrados, sem paginação) ──────────────
 
   const loadingExport = ref(false)
@@ -115,6 +137,7 @@ export const useRelatorioEntradasResiduos = () => {
     limparFiltros,
     irPara,
     exportarTodos,
+    contarPendenciasSinir,
     POR_PAGINA,
   }
 }
