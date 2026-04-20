@@ -2,11 +2,28 @@
   <div class="min-h-full">
     <!-- Page Header -->
     <div class="px-6 md:px-8 pt-8 pb-2">
-      <div class="flex flex-col">
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">Dashboard</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Visão geral dos serviços realizados</p>
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex flex-col">
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">Dashboard</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Visão geral dos serviços realizados</p>
+        </div>
+        <button
+          @click="modalRelatorio = true"
+          class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary-600 active:scale-95 transition-all shadow-soft shrink-0"
+        >
+          <FileJson class="w-4 h-4" />
+          Relatório Operacional
+        </button>
       </div>
     </div>
+
+    <ClientOnly>
+      <RelatoriosModalRelatorioOperacional
+        :show="modalRelatorio"
+        @fechar="modalRelatorio = false"
+        @gerado="onRelatorioGerado"
+      />
+    </ClientOnly>
 
     <!-- Main Content -->
     <div class="p-6 md:p-8 space-y-8">
@@ -45,5 +62,12 @@
 </template>
 
 <script setup lang="ts">
-import { HelpCircle } from 'lucide-vue-next'
+import { ref } from 'vue'
+import { HelpCircle, FileJson } from 'lucide-vue-next'
+
+const modalRelatorio = ref(false)
+
+function onRelatorioGerado(payload: object) {
+  console.log('[Relatório Operacional]', payload)
+}
 </script>
